@@ -14,14 +14,16 @@ namespace FogOfWar
 
         public BigInteger Z { get; private set; }
 
-        internal BigInteger PrivateExponent { get; }
+        private BigInteger PrivateExponent { get; }
 
         public Initilizer Initilize { get; }
+        public Scanner Scan { get; }
 
         public Node(Map map)
         {
             this.Map = map;
             this.Initilize = new Initilizer(this);
+            this.Scan = new Scanner(this);
             this.Z = CryptoHelper.Random(this.Map.Prime);
             this.originalZ = this.Z;
             this.PrivateExponent = CryptoHelper.Random(this.Map.Prime - 1);
