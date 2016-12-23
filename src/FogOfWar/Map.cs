@@ -9,24 +9,88 @@ namespace FogOfWar
 {
     public class Map
     {
-        private readonly IEnumerable<CryptoNode> generatedCryptoNodes;
+        private readonly CryptoNode[] generatedCryptoNodes;
         private readonly Dictionary<Prototype.Node, CryptoNode> prototypeLookup;
-        private readonly Dictionary<BigInteger, CryptoNode> CryptoLookup;
+        private Dictionary<BigInteger, CryptoNode> CryptoLookup;
 
-        public BigInteger Prime { get; }
+        internal BigInteger Prime { get; }
         public int MaxShips { get; }
         public Scanner Scan { get; }
 
         private Node ShadowNode { get; }
+        public Initilizer Initilize { get; }
 
         public Map(Prototype.Map prototyp, int maxShips)
         {
             this.generatedCryptoNodes = prototyp.Nodes.Select(x => new CryptoNode { PrototypeNode = x, TrueNode = new Node(this) }).ToArray();
             this.prototypeLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode);
-            this.CryptoLookup = this.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
             this.MaxShips = maxShips;
             this.Scan = new Scanner(this);
+            this.Initilize = new Initilizer(this);
             this.ShadowNode = new Node(this);
+        }
+
+
+        public class Initilizer
+        {
+            private readonly Map parent;
+            public Initilizer(Map parent)
+            {
+                this.parent = parent;
+            }
+
+            public IEnumerable<HandOverToPhase1> Phase0()
+            {
+                foreach (var item in this.parent.generatedCryptoNodes)
+                    yield return new HandOverToPhase1(item.TrueNode.Initilize.Phase0(), item.PrototypeNode);
+            }
+
+            public IEnumerable<HandOverToPhase2> Phase1(IEnumerable<HandOverToPhase1> fromPhaseOne)
+            {
+                foreach (var item in fromPhaseOne)
+                {
+                    var cn = this.parent.prototypeLookup[item.PrototypeNode];
+                    var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
+                    this.parent.CryptoLookup = this.parent.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
+                    yield return new HandOverToPhase2(ownExponented, cn.TrueNode.Z);
+                }
+            }
+
+            public void Phase2(IEnumerable<HandOverToPhase2> fromPhaseTwo)
+            {
+                foreach (var item in fromPhaseTwo)
+                {
+                    var cn = this.parent.CryptoLookup[item.Z];
+                    cn.TrueNode.Initilize.Phase2(item.OtherExponented);
+                }
+            }
+
+
+
+            public class HandOverToPhase1
+            {
+                internal BigInteger Value { get; }
+                internal Prototype.Node PrototypeNode { get; }
+
+
+                public HandOverToPhase1(BigInteger bigInteger, Prototype.Node prototypeNode)
+                {
+                    this.Value = bigInteger;
+                    this.PrototypeNode = prototypeNode;
+                }
+            }
+
+            public class HandOverToPhase2
+            {
+                internal BigInteger OtherExponented { get; }
+                internal BigInteger Z { get; }
+
+                public HandOverToPhase2(BigInteger ownExponented, BigInteger z)
+                {
+                    this.OtherExponented = ownExponented;
+                    this.Z = z;
+                }
+            }
         }
 
         public class Scanner
@@ -35,7 +99,7 @@ namespace FogOfWar
             private Prototype.Node[] position;
             private Prototype.Node[] toProbe;
 
-            public Scanner(Map parent)
+            internal Scanner(Map parent)
             {
                 this.parent = parent;
             }
@@ -52,7 +116,7 @@ namespace FogOfWar
                 }
             }
 
-            public IEnumerable<PreparedPosition> PreparePositions(IEnumerable<PreparedPosition> scanns)
+            public IEnumerable<PreparedPosition> PreparePositions(IEnumerable<PreparedScan> scanns)
             {
                 for (int i = 0; i < this.parent.MaxShips; i++)
                 {
@@ -69,6 +133,11 @@ namespace FogOfWar
                 }
             }
 
+            /// <summary>
+            /// Returns the nodes where your openent needs to tell you his units.
+            /// </summary>
+            /// <param name="positions"></param>
+            /// <returns></returns>
             public IEnumerable<Prototype.Node> ExecuteProbe(IEnumerable<PreparedPosition> positions)
             {
                 foreach (var p in positions)
@@ -82,9 +151,9 @@ namespace FogOfWar
 
             public class PreparedPosition
             {
-                public BigInteger Value { get; }
+                internal BigInteger Value { get; }
 
-                public int Index { get; }
+                internal int Index { get; }
 
                 public PreparedPosition(BigInteger value, int index)
                 {
@@ -95,9 +164,9 @@ namespace FogOfWar
 
             public class PreparedScan
             {
-                public BigInteger Value { get; }
+                internal BigInteger Value { get; }
 
-                public PreparedScan(BigInteger value)
+                internal PreparedScan(BigInteger value)
                 {
                     this.Value = value;
                 }

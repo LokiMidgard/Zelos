@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace FogOfWar
 {
-    class Node
+    internal class Node
     {
-        private readonly BigInteger originalZ;
+        private BigInteger originalZ;
 
         public Map Map { get; }
 
@@ -18,14 +18,15 @@ namespace FogOfWar
 
         public Initilizer Initilize { get; }
         public Scanner Scan { get; }
+        public bool IsInitilized => this.Initilize.Phase == Initilizer.PhaseState.Finished;
 
         public Node(Map map)
         {
             this.Map = map;
             this.Initilize = new Initilizer(this);
             this.Scan = new Scanner(this);
-            this.Z = CryptoHelper.Random(this.Map.Prime);
-            this.originalZ = this.Z;
+
+
             this.PrivateExponent = CryptoHelper.Random(this.Map.Prime - 1);
         }
 
@@ -76,7 +77,8 @@ namespace FogOfWar
 
             private BigInteger CalculateInverse(BigInteger privateExponent)
             {
-                throw new NotImplementedException();
+                // Hope I understood it corect.
+                return BigInteger.ModPow(privateExponent, this.parent.Map.Prime - 2, this.parent.Map.Prime);
             }
 
             public enum ScannerState
@@ -86,29 +88,67 @@ namespace FogOfWar
             }
         }
 
+
         public class Initilizer
         {
             private readonly Node parent;
-
+            private BigInteger initialZ;
+            internal PhaseState Phase { get; private set; }
             public Initilizer(Node parent)
             {
                 this.parent = parent;
+                this.Phase = PhaseState.Phase0;
             }
 
             /// <summary>
-            /// Adds the own Secreet Exponent to Z (mod Prime)
+            /// First generate your part of Z and send it to the other Party
             /// </summary>
-            /// <returns></returns>
-            public (BigInteger originalZ, BigInteger exchange) Phase1()
+            /// <returns>Your part of Z</returns>
+            public BigInteger Phase0()
             {
-                var firstExponent = BigInteger.ModPow(this.parent.Z, this.parent.PrivateExponent, this.parent.Map.Prime);
-                return (this.parent.Z, firstExponent);
+                if (this.Phase != PhaseState.Phase0)
+                    throw new InvalidOperationException();
+                this.initialZ = CryptoHelper.Random(this.parent.Map.Prime); // create our part of Z
+                this.Phase = PhaseState.Phase1;
+                return this.initialZ;
             }
 
+            /// <summary>
+            /// Using the others Z to create the Original Z and Z ^ your exponent
+            /// </summary>
+            /// <param name="otherZ">the others part of Z</param>
+            /// <returns>Original Z ^ private exponent</returns>
+            public BigInteger Phase1(BigInteger otherZ)
+            {
+                if (this.Phase != PhaseState.Phase1)
+                    throw new InvalidOperationException();
+                this.parent.originalZ = otherZ ^ this.initialZ; // should be safe because z must only be smaler than p and z_1 ^ z_2 <= Min(z_1,z_2) <= p
+
+                var firstExponent = BigInteger.ModPow(this.parent.originalZ, this.parent.PrivateExponent, this.parent.Map.Prime);
+                this.Phase = PhaseState.Phase2;
+                return firstExponent;
+            }
+
+            /// <summary>
+            /// Calculats Z using the other Partys Original Z ^ other Private exponent . After this Initialisation is Finished.
+            /// </summary>
+            /// <param name="exchange">Original Z ^ other Private exponent </param>
             public void Phase2(BigInteger exchange)
             {
+                if (this.Phase != PhaseState.Phase2)
+                    throw new InvalidOperationException();
+
                 var combined = BigInteger.ModPow(exchange, this.parent.PrivateExponent, this.parent.Map.Prime);
                 this.parent.Z = combined;
+                this.Phase = PhaseState.Finished;
+            }
+
+            internal enum PhaseState
+            {
+                Phase0,
+                Phase1,
+                Phase2,
+                Finished
             }
         }
     }
