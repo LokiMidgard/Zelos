@@ -20,7 +20,7 @@ namespace FogOfWar
 
         public static BigInteger GeneratePrime()
         {
-            //return 199;
+            //return 199; // Small Prime for debug
             using (var rsa = System.Security.Cryptography.RSA.Create())
             {
                 var prime = new BigInteger(rsa.ExportParameters(true).P.Reverse().Concat(new byte[] { 0 }).ToArray());
@@ -28,6 +28,39 @@ namespace FogOfWar
                 return prime;
             }
         }
+
+        public static (BigInteger exponent, BigInteger inverse) GenerateExponent(BigInteger p)
+        {
+            // https://de.wikipedia.org/w/index.php?title=Erweiterter_euklidischer_Algorithmus&oldid=159924219#Rekursive_Variante_2
+            (BigInteger d, BigInteger s, BigInteger t) extended_euclid(BigInteger a, BigInteger b)
+            {
+                if (b == 0)
+                    return (a, 1, 0);
+                var (d1, s1, t1) = extended_euclid(b, a % b);
+                var (d, s, t) = (d1, t1, s1 - (a / b) * t1);
+                return (d, s, t);
+            }
+
+            (BigInteger d, BigInteger s, BigInteger t) euclideResult;
+            BigInteger candidate;
+            do
+            {
+                candidate = Random(p);
+                euclideResult = extended_euclid(candidate, p - 1);
+            } while (euclideResult.d != 1);
+            var inverse = euclideResult.s;
+            while (inverse < 0)
+                inverse += p - 1;
+#if DEBUG
+            var testValue = Random(p);
+            var testcalc = BigInteger.ModPow(testValue, candidate, p);
+            var back = BigInteger.ModPow(testcalc, inverse, p);
+            if (back != testValue)
+                throw new Exception();
+#endif
+            return (candidate, inverse);
+        }
+
         [Conditional("DEBUG")]
         private static void ThrowIfIsNotPrime(BigInteger a)
         {

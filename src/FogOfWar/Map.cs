@@ -143,13 +143,13 @@ namespace FogOfWar
 
             public IEnumerable<PreparedScan> PrepareForPrope(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
             {
-                var blendFactor = CryptoHelper.GeneratePrime();
+                (var blendFactor, var inverseBlendfactor) = CryptoHelper.GenerateExponent(this.parent.Prime);
                 IEnumerable<PreparedScan> InternalPrepareForPrope()
                 {
                     foreach (var node in this.toProbe)
                     {
                         var cryptoNode = this.parent.prototypeLookup[node];
-                        yield return new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor));
+                        yield return new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor));
                     }
                 }
 

@@ -15,6 +15,7 @@ namespace FogOfWar
         public BigInteger Z { get; private set; }
 
         private BigInteger PrivateExponent { get; set; }
+        private BigInteger InverseExponent { get; set; }
 
         public Initilizer Initilize { get; }
         public Scanner Scan { get; }
@@ -33,6 +34,7 @@ namespace FogOfWar
         {
             private readonly Node parent;
             private BigInteger blendFactor;
+            private BigInteger inverseBlendFactor;
 
             public ScannerState State { get; private set; } = ScannerState.None;
 
@@ -41,18 +43,13 @@ namespace FogOfWar
                 this.parent = parent;
             }
 
-            public BigInteger Prepare(BigInteger blendFactor)
+            public BigInteger Prepare(BigInteger blendFactor, BigInteger inverseBlendFactor)
             {
                 if (this.State != ScannerState.None)
                     throw new InvalidOperationException();
                 this.blendFactor = blendFactor;
+                this.inverseBlendFactor = inverseBlendFactor;
                 var scanvalue = BigInteger.ModPow(this.parent.Z, this.blendFactor, this.parent.Map.Prime);
-#if DEBUG
-                var inverse = CalculateInverse(blendFactor);
-                var test = BigInteger.ModPow(scanvalue, inverse, this.parent.Map.Prime);
-                if (test != this.parent.Z)
-                    throw new Exception();
-#endif
                 this.State = ScannerState.Prepared;
                 return scanvalue;
             }
@@ -64,8 +61,7 @@ namespace FogOfWar
             /// <returns></returns>
             public BigInteger Position(BigInteger prepared)
             {
-                var inverse = CalculateInverse(this.parent.PrivateExponent);
-                var encrypted = BigInteger.ModPow(this.parent.Z, inverse, this.parent.Map.Prime);
+                var encrypted = BigInteger.ModPow(prepared, this.parent.InverseExponent, this.parent.Map.Prime);
                 return encrypted;
             }
 
@@ -76,11 +72,9 @@ namespace FogOfWar
 
                 try
                 {
-                    var inverseBlendFactor = CalculateInverse(this.blendFactor);
-                    var inverseExponent = CalculateInverse(this.parent.PrivateExponent);
                     foreach (var toScann in collection)
                     {
-                        var stripedZ = BigInteger.ModPow(BigInteger.ModPow(toScann, inverseBlendFactor, this.parent.Map.Prime), inverseExponent, this.parent.Map.Prime);
+                        var stripedZ = BigInteger.ModPow(BigInteger.ModPow(toScann, this.inverseBlendFactor, this.parent.Map.Prime), this.parent.InverseExponent, this.parent.Map.Prime);
                         if (stripedZ == this.parent.originalZ)
                             return true;
                     }
@@ -90,26 +84,6 @@ namespace FogOfWar
                 {
                     this.State = ScannerState.None;
                 }
-            }
-
-            private BigInteger CalculateInverse(BigInteger privateExponent)
-            {
-                //// https://de.wikipedia.org/w/index.php?title=Erweiterter_euklidischer_Algorithmus&oldid=159924219#Rekursive_Variante_2
-                //(BigInteger d, BigInteger s, BigInteger t) extended_euclid(BigInteger a, BigInteger b)
-                //{
-                //    if (b == 0)
-                //        return (a, 1, 0);
-                //    var (d1, s1, t1) = extended_euclid(b, a % b);
-                //    var (d, s, t) = (d1, t1, s1 - (a / b) * t1);
-                //    return (d, s, t);
-                //}
-
-                //var inverse = extended_euclid(privateExponent, this.parent.Map.Prime).s;
-                //while (inverse < 0)
-                //    inverse += this.parent.Map.Prime;
-                //return inverse;
-                // Hope I understood it corect.
-                return BigInteger.ModPow(privateExponent, this.parent.Map.Prime - 2, this.parent.Map.Prime);
             }
 
             public enum ScannerState
@@ -140,7 +114,7 @@ namespace FogOfWar
             {
                 if (this.Phase != PhaseState.Phase0)
                     throw new InvalidOperationException();
-                this.parent.PrivateExponent = CryptoHelper.GeneratePrime();
+                (this.parent.PrivateExponent, this.parent.InverseExponent) = CryptoHelper.GenerateExponent(parent.Map.Prime);
 
                 this.initialZ = CryptoHelper.Random(this.parent.Map.Prime); // create our part of Z
                 this.Phase = PhaseState.Phase1;
@@ -156,7 +130,7 @@ namespace FogOfWar
             {
                 if (this.Phase != PhaseState.Phase1)
                     throw new InvalidOperationException();
-                this.parent.originalZ = otherZ ^ this.initialZ; // should be safe because z must only be smaler than p and z_1 ^ z_2 <= Min(z_1,z_2) <= p
+                this.parent.originalZ = (otherZ ^ this.initialZ) % this.parent.Map.Prime;
 
                 if (this.parent.originalZ == 1)
                     this.parent.originalZ = 2;
@@ -181,24 +155,6 @@ namespace FogOfWar
                 this.parent.Z = combined;
                 this.Phase = PhaseState.Finished;
             }
-
-            //private BigInteger CalculateInverse(BigInteger privateExponent)
-            //{
-            //    // Hope I understood it corect.
-            //    var x = extended_euclid(privateExponent, parent.Map.Prime);
-            //    return x.s;
-            //    return BigInteger.ModPow(privateExponent, this.parent.Map.Prime - 2, this.parent.Map.Prime);
-            //}
-
-            //// https://de.wikipedia.org/w/index.php?title=Erweiterter_euklidischer_Algorithmus&oldid=159924219#Rekursive_Variante_2
-            //public (BigInteger d, BigInteger s, BigInteger t) extended_euclid(BigInteger a, BigInteger b)
-            //{
-            //    if (b == 0)
-            //        return (a, 1, 0);
-            //    var (d1, s1, t1) = extended_euclid(b, a % b);
-            //    var (d, s, t) = (d1, t1, s1 - (a / b) * t1);
-            //    return (d, s, t);
-            //}
 
             internal enum PhaseState
             {
