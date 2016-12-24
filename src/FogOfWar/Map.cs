@@ -13,14 +13,15 @@ namespace FogOfWar
         private readonly Dictionary<Prototype.Node, CryptoNode> prototypeLookup;
         private Dictionary<BigInteger, CryptoNode> CryptoLookup;
 
-        internal BigInteger Prime { get; }
+        internal BigInteger Prime { get; private set; }
         public int MaxShips { get; }
         public Scanner Scan { get; }
 
         private Node ShadowNode { get; }
         public Initilizer Initilize { get; }
+        public bool IsInitilzied => this.Initilize.Phase == Initilizer.PhaseState.Finished;
 
-        public Map(Prototype.Map prototyp, int maxShips)
+        public Map(Prototype.Map prototyp, int maxShips, BigInteger prime)
         {
             this.generatedCryptoNodes = prototyp.Nodes.Select(x => new CryptoNode { PrototypeNode = x, TrueNode = new Node(this) }).ToArray();
             this.prototypeLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode);
@@ -28,11 +29,13 @@ namespace FogOfWar
             this.Scan = new Scanner(this);
             this.Initilize = new Initilizer(this);
             this.ShadowNode = new Node(this);
+            this.Prime = prime;
         }
 
 
         public class Initilizer
         {
+            internal PhaseState Phase { get; private set; }
             private readonly Map parent;
             public Initilizer(Map parent)
             {
@@ -41,28 +44,54 @@ namespace FogOfWar
 
             public IEnumerable<HandOverToPhase1> Phase0()
             {
-                foreach (var item in this.parent.generatedCryptoNodes)
-                    yield return new HandOverToPhase1(item.TrueNode.Initilize.Phase0(), item.PrototypeNode);
+                //this.parent.Prime = CryptoHelper.GeneratePrime();
+                if (this.Phase != PhaseState.Phase0)
+                    throw new InvalidOperationException();
+                this.Phase = PhaseState.Phase1;
+
+                return InternalPhase0().ToArray();
+
+                IEnumerable<HandOverToPhase1> InternalPhase0()
+                {
+                    foreach (var item in this.parent.generatedCryptoNodes)
+                        yield return new HandOverToPhase1(item.TrueNode.Initilize.Phase0(), item.PrototypeNode);
+                }
             }
+
 
             public IEnumerable<HandOverToPhase2> Phase1(IEnumerable<HandOverToPhase1> fromPhaseOne)
             {
-                foreach (var item in fromPhaseOne)
+                if (this.Phase != PhaseState.Phase1)
+                    throw new InvalidOperationException();
+                this.Phase = PhaseState.Phase2;
+
+                return InternalPhase1(fromPhaseOne).ToArray();
+
+                IEnumerable<HandOverToPhase2> InternalPhase1(IEnumerable<HandOverToPhase1> fromPhase1)
                 {
-                    var cn = this.parent.prototypeLookup[item.PrototypeNode];
-                    var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
-                    this.parent.CryptoLookup = this.parent.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
-                    yield return new HandOverToPhase2(ownExponented, cn.TrueNode.Z);
+                    foreach (var item in fromPhase1)
+                    {
+                        var cn = this.parent.prototypeLookup[item.PrototypeNode];
+                        var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
+                        yield return new HandOverToPhase2(ownExponented, cn.PrototypeNode);
+                    }
+
                 }
             }
 
             public void Phase2(IEnumerable<HandOverToPhase2> fromPhaseTwo)
             {
+                if (this.Phase != PhaseState.Phase2)
+                    throw new InvalidOperationException();
+
                 foreach (var item in fromPhaseTwo)
                 {
-                    var cn = this.parent.CryptoLookup[item.Z];
+                    var cn = this.parent.prototypeLookup[item.PrototypeNode];
                     cn.TrueNode.Initilize.Phase2(item.OtherExponented);
                 }
+                this.parent.CryptoLookup = this.parent.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
+
+                this.Phase = PhaseState.Finished;
             }
 
 
@@ -83,14 +112,22 @@ namespace FogOfWar
             public class HandOverToPhase2
             {
                 internal BigInteger OtherExponented { get; }
-                internal BigInteger Z { get; }
+                internal Prototype.Node PrototypeNode { get; }
 
-                public HandOverToPhase2(BigInteger ownExponented, BigInteger z)
+                public HandOverToPhase2(BigInteger ownExponented, Prototype.Node prototypeNode)
                 {
                     this.OtherExponented = ownExponented;
-                    this.Z = z;
+                    this.PrototypeNode = prototypeNode;
                 }
             }
+            internal enum PhaseState
+            {
+                Phase0,
+                Phase1,
+                Phase2,
+                Finished
+            }
+
         }
 
         public class Scanner
@@ -106,30 +143,43 @@ namespace FogOfWar
 
             public IEnumerable<PreparedScan> PrepareForPrope(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
             {
-                this.position = ownPositions.ToArray();
-                this.toProbe = positionsToProbe.ToArray();
-                var blendFactor = CryptoHelper.Random(this.parent.Prime);
-                foreach (var node in this.toProbe)
+                var blendFactor = CryptoHelper.GeneratePrime();
+                IEnumerable<PreparedScan> InternalPrepareForPrope()
                 {
-                    var cryptoNode = this.parent.prototypeLookup[node];
-                    yield return new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor));
+                    foreach (var node in this.toProbe)
+                    {
+                        var cryptoNode = this.parent.prototypeLookup[node];
+                        yield return new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor));
+                    }
                 }
+
+                this.position = ownPositions.ToArray();
+                if (this.position.Length > this.parent.MaxShips)
+                    throw new ArgumentOutOfRangeException("To many Positions");
+                this.toProbe = positionsToProbe.ToArray();
+                return InternalPrepareForPrope().ToArray();
+
             }
 
             public IEnumerable<PreparedPosition> PreparePositions(IEnumerable<PreparedScan> scanns)
             {
-                for (int i = 0; i < this.parent.MaxShips; i++)
+                return InternalPreparePositions().ToArray();
+
+                IEnumerable<PreparedPosition> InternalPreparePositions()
                 {
-                    Node cryptoNode;
-                    if (this.position.Length < i)
-                        cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
-                    else
-                        cryptoNode = this.parent.ShadowNode;
+                    for (int i = 0; i < this.parent.MaxShips; i++)
+                    {
+                        Node cryptoNode;
+                        if (i < this.position.Length)
+                            cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
+                        else
+                            cryptoNode = this.parent.ShadowNode;
 
-                    var scannArray = scanns.ToArray();
+                        var scannArray = scanns.ToArray();
 
-                    for (int j = 0; j < scannArray.Length; j++)
-                        yield return new PreparedPosition(cryptoNode.Scan.Position(scannArray[j].Value), j);
+                        for (int j = 0; j < scannArray.Length; j++)
+                            yield return new PreparedPosition(cryptoNode.Scan.Position(scannArray[j].Value), j);
+                    }
                 }
             }
 
@@ -140,12 +190,17 @@ namespace FogOfWar
             /// <returns></returns>
             public IEnumerable<Prototype.Node> ExecuteProbe(IEnumerable<PreparedPosition> positions)
             {
-                foreach (var p in positions)
+                return InternalExecuteProbe().ToArray();
+                IEnumerable<Prototype.Node> InternalExecuteProbe()
                 {
-                    var crypto = this.parent.prototypeLookup[this.toProbe[p.Index]];
-                    var found = crypto.TrueNode.Scan.Scan(p.Value);
-                    if (found)
-                        yield return this.toProbe[p.Index];
+                    foreach (var p in positions.GroupBy(x => x.Index, x => x.Value))
+                    {
+                        var node = this.toProbe[p.Key];
+                        var crypto = this.parent.prototypeLookup[node];
+                        var found = crypto.TrueNode.Scan.Scan(p);
+                        if (found)
+                            yield return node;
+                    }
                 }
             }
 
