@@ -24,8 +24,15 @@ namespace FogOfWar.Prototype
             return newNode;
         }
 
+        public bool IsConnected(Node n1, Node n2)
+        {
+            return n1.edges.Contains(n2) && n2.edges.Contains(n1);
+        }
+
         public void ConnectNodes(Node n1, Node n2)
         {
+            if (n1.edges.Contains(n2) || n2.edges.Contains(n1))
+                throw new ArgumentException("Connection already established");
             n1.edges.Add(n2);
             n2.edges.Add(n1);
         }
