@@ -4,8 +4,9 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Zelos.Common.Crypto;
 
-namespace FogOfWar
+namespace Zelos.FogOfWar
 {
     internal class Node
     {
@@ -116,9 +117,9 @@ namespace FogOfWar
             {
                 if (this.Phase != PhaseState.Phase0)
                     throw new InvalidOperationException();
-                (this.parent.PrivateExponent, this.parent.InverseExponent) = CryptoHelper.GenerateExponent(parent.Map.Prime);
+                (this.parent.PrivateExponent, this.parent.InverseExponent) = Generate.InversableExponent(parent.Map.Prime);
 
-                this.initialZ = CryptoHelper.Random(this.parent.Map.Prime); // create our part of Z
+                this.initialZ = Generate.Random(this.parent.Map.Prime); // create our part of Z
                 this.Phase = PhaseState.Phase1;
                 return this.initialZ;
             }

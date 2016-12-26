@@ -10,7 +10,7 @@ namespace FogOfWar.Test
         [TestMethod]
         public void TestNodesCreatetAreDifferent()
         {
-            var map = new FogOfWar.Prototype.Map();
+            var map = new Zelos.FogOfWar.Prototype.Map();
             var n1 = map.CreateNode();
             var n2 = map.CreateNode();
 
@@ -22,7 +22,7 @@ namespace FogOfWar.Test
         [TestMethod]
         public void TestNodesIsContaintInCollection()
         {
-            var map = new FogOfWar.Prototype.Map();
+            var map = new Zelos.FogOfWar.Prototype.Map();
             var n1 = map.CreateNode();
 
             CollectionAssert.Contains(map.Nodes.ToArray(), n1);
@@ -31,7 +31,7 @@ namespace FogOfWar.Test
         [TestMethod]
         public void TestNodesConnect()
         {
-            var map = new FogOfWar.Prototype.Map();
+            var map = new Zelos.FogOfWar.Prototype.Map();
             var n1 = map.CreateNode();
             var n2 = map.CreateNode();
 
@@ -44,7 +44,7 @@ namespace FogOfWar.Test
         [TestMethod]
         public void TestIsConected()
         {
-            var map = new FogOfWar.Prototype.Map();
+            var map = new Zelos.FogOfWar.Prototype.Map();
             var n1 = map.CreateNode();
             var n2 = map.CreateNode();
             var n3 = map.CreateNode();
@@ -58,8 +58,8 @@ namespace FogOfWar.Test
         [TestMethod]
         public void NodesOfDiferentMapsAreNotEqual()
         {
-            var map1 = new FogOfWar.Prototype.Map();
-            var map2 = new FogOfWar.Prototype.Map();
+            var map1 = new Zelos.FogOfWar.Prototype.Map();
+            var map2 = new Zelos.FogOfWar.Prototype.Map();
             var n1 = map1.CreateNode();
             var n2 = map2.CreateNode();
 

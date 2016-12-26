@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FogOfWar.Prototype
+namespace Zelos.FogOfWar.Prototype
 {
     public class Map
     {

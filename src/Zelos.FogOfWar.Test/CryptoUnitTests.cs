@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
-using FogOfWar.Prototype;
+using Zelos.FogOfWar.Prototype;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Zelos.Common.Crypto;
 
-namespace FogOfWar.Test
+namespace Zelos.FogOfWar.Test
 {
     [TestClass]
     public class CryptoUnitTests
@@ -26,7 +27,7 @@ namespace FogOfWar.Test
         [ClassInitialize]
         public static void ClassInitilize(TestContext context)
         {
-            var map = new FogOfWar.Prototype.Map();
+            var map = new Prototype.Map();
             N0 = map.CreateNode();
             N1 = map.CreateNode();
             N2 = map.CreateNode();
@@ -39,7 +40,7 @@ namespace FogOfWar.Test
             N9 = map.CreateNode();
 
             // We dont need to Connect Nodes, this has no influence on the crypto part
-            var p = CryptoHelper.GeneratePrime();
+            var p = Generate.Prime();
             Map1 = new Map(map, 10, p);
             Map2 = new Map(map, 10, p);
 

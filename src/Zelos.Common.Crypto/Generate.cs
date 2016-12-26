@@ -1,24 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
-using System.Text;
 
-namespace FogOfWar
+namespace Zelos.Common.Crypto
 {
-    public static class CryptoHelper
+    public static class Generate
     {
         private static readonly RandomNumberGenerator rng;
 
-        static CryptoHelper()
+        static Generate()
         {
             rng = System.Security.Cryptography.RandomNumberGenerator.Create();
         }
 
 
-        public static BigInteger GeneratePrime()
+        public static BigInteger Prime()
         {
             //return 199; // Small Prime for debug
             using (var rsa = System.Security.Cryptography.RSA.Create())
@@ -29,7 +27,7 @@ namespace FogOfWar
             }
         }
 
-        public static (BigInteger exponent, BigInteger inverse) GenerateExponent(BigInteger p)
+        public static (BigInteger exponent, BigInteger inverse) InversableExponent(BigInteger p)
         {
             // https://de.wikipedia.org/w/index.php?title=Erweiterter_euklidischer_Algorithmus&oldid=159924219#Rekursive_Variante_2
             (BigInteger d, BigInteger s, BigInteger t) extended_euclid(BigInteger a, BigInteger b)
@@ -85,30 +83,32 @@ namespace FogOfWar
                 if (a % v == 0)
                     return false;
             return true;
+
+            // http://stackoverflow.com/a/3432579/3485361
+            BigInteger Sqrt(BigInteger x)
+            {
+                int b = 15; // this is the next bit we try 
+                uint r = 0; // r will contain the result
+                uint r2 = 0; // here we maintain r squared
+                while (b >= 0)
+                {
+                    uint sr2 = r2;
+                    uint sr = r;
+                    // compute (r+(1<<b))**2, we have r**2 already.
+                    r2 += (uint)((r << (1 + b)) + (1 << (b + b)));
+                    r += (uint)(1 << b);
+                    if (r2 > x)
+                    {
+                        r = sr;
+                        r2 = sr2;
+                    }
+                    b--;
+                }
+                return r;
+            }
+
         }
 
-        // http://stackoverflow.com/a/3432579/3485361
-        private static BigInteger Sqrt(BigInteger x)
-        {
-            int b = 15; // this is the next bit we try 
-            uint r = 0; // r will contain the result
-            uint r2 = 0; // here we maintain r squared
-            while (b >= 0)
-            {
-                uint sr2 = r2;
-                uint sr = r;
-                // compute (r+(1<<b))**2, we have r**2 already.
-                r2 += (uint)((r << (1 + b)) + (1 << (b + b)));
-                r += (uint)(1 << b);
-                if (r2 > x)
-                {
-                    r = sr;
-                    r2 = sr2;
-                }
-                b--;
-            }
-            return r;
-        }
 
         public static BigInteger Random(BigInteger max)
         {

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using FogOfWar.Prototype;
+using Zelos.Common.Crypto;
 
-namespace FogOfWar
+namespace Zelos.FogOfWar
 {
     public class Map
     {
@@ -164,7 +164,7 @@ namespace FogOfWar
 
             public Task<PScan> PrepareForPropeAsync(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
             {
-                (var blendFactor, var inverseBlendfactor) = CryptoHelper.GenerateExponent(this.parent.Prime);
+                (var blendFactor, var inverseBlendfactor) = Generate.InversableExponent(this.parent.Prime);
                 this.position = ownPositions.ToArray();
                 this.toProbe = positionsToProbe.ToArray();
                 var result = new PScan() { Scanns = new PreparedScan[this.toProbe.Length] };

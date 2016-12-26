@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
+using Zelos.FogOfWar;
+using Zelos.Common.Crypto;
 
 namespace FogOfWar.Test
 {
@@ -11,12 +13,12 @@ namespace FogOfWar.Test
         [TestMethod]
         public void TestInitialisation()
         {
-            var map = new FogOfWar.Prototype.Map();
+            var map = new Zelos.FogOfWar.Prototype.Map();
             var n1 = map.CreateNode();
             var n2 = map.CreateNode();
 
 
-            var p = CryptoHelper.GeneratePrime();
+            var p = Generate.Prime();
             var cMap1 = new Map(map, 1, p);
             var cMap2 = new Map(map, 1, p);
 
