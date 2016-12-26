@@ -85,7 +85,7 @@ namespace FogOfWar
                 });
             }
 
-            public  Task Phase2Async(HandOverToPhase2 fromPhaseTwo)
+            public Task Phase2Async(HandOverToPhase2 fromPhaseTwo)
             {
                 if (this.Phase != PhaseState.Phase2)
                     throw new InvalidOperationException();
@@ -162,7 +162,7 @@ namespace FogOfWar
                 this.parent = parent;
             }
 
-            public async Task<PScan> PrepareForPropeAsync(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
+            public Task<PScan> PrepareForPropeAsync(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
             {
                 (var blendFactor, var inverseBlendfactor) = CryptoHelper.GenerateExponent(this.parent.Prime);
                 this.position = ownPositions.ToArray();
@@ -170,45 +170,42 @@ namespace FogOfWar
                 var result = new PScan() { Scanns = new PreparedScan[this.toProbe.Length] };
                 if (this.position.Length > this.parent.MaxShips)
                     throw new ArgumentOutOfRangeException("To many Positions");
-
-                await Task.WhenAll(Enumerable.Range(0, result.Scanns.Length).Select(i =>
+                return Task.Run(() =>
                 {
-                    return Task.Run(() =>
+                    Parallel.For(0, result.Scanns.Length, i =>
                     {
                         var node = this.toProbe[i];
                         var cryptoNode = this.parent.prototypeLookup[node];
                         result.Scanns[i] = new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor));
+
                     });
+                    return result;
+                });
 
-                }));
-
-                return result;
 
             }
 
-            public async Task<PPosition> PreparePositionsAsync(PScan scanns)
+            public Task<PPosition> PreparePositionsAsync(PScan scanns)
             {
                 var result = new PPosition() { Positions = new PreparedPosition[this.parent.MaxShips * scanns.Scanns.Length] };
 
-                await Task.WhenAll(Enumerable.Range(0, result.Positions.Length).Select(index =>
-                {
-                    return Task.Run(() =>
-                    {
-                        var i = index / scanns.Scanns.Length;
-                        var j = index % scanns.Scanns.Length;
-                        Node cryptoNode;
-                        if (i < this.position.Length)
-                            cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
-                        else
-                            cryptoNode = this.parent.ShadowNode;
+                return Task.Run(() =>
+               {
+                   Parallel.For(0, result.Positions.Length, index =>
+                   {
+                       var i = index / scanns.Scanns.Length;
+                       var j = index % scanns.Scanns.Length;
+                       Node cryptoNode;
+                       if (i < this.position.Length)
+                           cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
+                       else
+                           cryptoNode = this.parent.ShadowNode;
 
-                        //for (int j = 0; j < scanns.Scanns.Length; j++)
-                        result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition(cryptoNode.Scan.Position(scanns.Scanns[j].Value), j);
-                    });
-                }));
-
-
-                return result;
+                       //for (int j = 0; j < scanns.Scanns.Length; j++)
+                       result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition(cryptoNode.Scan.Position(scanns.Scanns[j].Value), j);
+                   });
+                   return result;
+               });
             }
 
             /// <summary>
@@ -220,15 +217,15 @@ namespace FogOfWar
             {
 
                 var searching = await Task.WhenAll(positions.Positions.GroupBy(x => x.Index, x => x.Value).Select(async p =>
-               {
-                   var node = this.toProbe[p.Key];
-                   var crypto = this.parent.prototypeLookup[node];
-                   var found = await crypto.TrueNode.Scan.ScanAsync(p);
-                   if (found)
-                       return node;
-                   return null;
+                {
+                    var node = this.toProbe[p.Key];
+                    var crypto = this.parent.prototypeLookup[node];
+                    var found = await crypto.TrueNode.Scan.ScanAsync(p);
+                    if (found)
+                        return node;
+                    return null;
 
-               }));
+                }));
 
                 return searching.Where(x => x != null).ToArray();
             }

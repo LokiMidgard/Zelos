@@ -73,21 +73,14 @@ namespace FogOfWar
 
                 try
                 {
+                    var result = await Task.Run(() => Parallel.ForEach(collection, (element, state) =>
+                    {
+                        var stripedZ = BigInteger.ModPow(BigInteger.ModPow(element, this.inverseBlendFactor, this.parent.Map.Prime), this.parent.InverseExponent, this.parent.Map.Prime);
+                        if (stripedZ == this.parent.originalZ)
+                            state.Stop();
+                    }));
 
-                    var cancel = new System.Threading.CancellationTokenSource();
-
-                    var result = await collection.Select(
-                        async toScann =>
-                        {
-                            var token = cancel.Token;
-                            if (token.IsCancellationRequested)
-                                return BigInteger.Zero;
-                            var stripedZ = await Task.Run(() => BigInteger.ModPow(BigInteger.ModPow(toScann, this.inverseBlendFactor, this.parent.Map.Prime), this.parent.InverseExponent, this.parent.Map.Prime), token);
-                            return stripedZ;
-                        }
-                        ).WhenAnyAsync(stripedZ => stripedZ == this.parent.originalZ);
-                    cancel.Cancel();
-                    return result != null; //  if null we did not find anything.
+                    return !result.IsCompleted; // When completed then we did not find any value
                 }
                 finally
                 {
