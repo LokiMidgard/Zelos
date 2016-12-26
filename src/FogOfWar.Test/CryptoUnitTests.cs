@@ -43,14 +43,20 @@ namespace FogOfWar.Test
             Map1 = new Map(map, 10, p);
             Map2 = new Map(map, 10, p);
 
-            var phase1_1 = Map1.Initilize.Phase0().ToArray();
-            var phase1_2 = Map2.Initilize.Phase0().ToArray();
+            var t1_1 = Map1.Initilize.Phase0Async();
+            var t1_2 = Map2.Initilize.Phase0Async();
+            Task.WaitAll(t1_1, t1_2);
+            var phase1_1 = t1_1.Result;
+            var phase1_2 = t1_2.Result;
 
-            var phase2_1 = Map1.Initilize.Phase1(phase1_2);
-            var phase2_2 = Map2.Initilize.Phase1(phase1_1);
+            var t2_1 = Map1.Initilize.Phase1Async(phase1_2);
+            var t2_2 = Map2.Initilize.Phase1Async(phase1_1);
+            Task.WaitAll(t2_1, t2_2);
+            var phase2_1 = t2_1.Result;
+            var phase2_2 = t2_2.Result;
 
-            Map1.Initilize.Phase2(phase2_2);
-            Map2.Initilize.Phase2(phase2_1);
+            Task.WaitAll(Map1.Initilize.Phase2Async(phase2_2),
+                Map2.Initilize.Phase2Async(phase2_1));
 
             Assert.IsTrue(Map1.IsInitilzied);
             Assert.IsTrue(Map2.IsInitilzied);
@@ -107,14 +113,11 @@ namespace FogOfWar.Test
                         lists[j].Add(data[i]);
                 }
 
-
             var t1_0 = Map1.Scan.PrepareForPropeAsync(position1, search1);
             var t2_0 = Map2.Scan.PrepareForPropeAsync(position2, search2);
             Task.WaitAll(t1_0, t2_0);
             var s1_1 = t1_0.Result;
             var s1_2 = t2_0.Result;
-
-
 
             var t1_1 = Map1.Scan.PreparePositionsAsync(s1_2);
             var t2_1 = Map2.Scan.PreparePositionsAsync(s1_1);
@@ -127,7 +130,6 @@ namespace FogOfWar.Test
             Task.WaitAll(t1, t2);
             var s3_1 = t1.Result.ToArray();
             var s3_2 = t2.Result.ToArray();
-
 
             for (int i = 0; i < data.Length; i++)
             {

@@ -42,79 +42,100 @@ namespace FogOfWar
                 this.parent = parent;
             }
 
-            public IEnumerable<HandOverToPhase1> Phase0()
+            public Task<HandOverToPhase1> Phase0Async()
             {
                 //this.parent.Prime = CryptoHelper.GeneratePrime();
                 if (this.Phase != PhaseState.Phase0)
                     throw new InvalidOperationException();
                 this.Phase = PhaseState.Phase1;
 
-                return InternalPhase0().ToArray();
-
-                IEnumerable<HandOverToPhase1> InternalPhase0()
+                return Task.Run(() =>
                 {
-                    foreach (var item in this.parent.generatedCryptoNodes)
-                        yield return new HandOverToPhase1(item.TrueNode.Initilize.Phase0(), item.PrototypeNode);
-                }
+                    var result = new HandOverToPhase1() { Nodes = new NodeToPhase1[this.parent.generatedCryptoNodes.Length] };
+                    for (int i = 0; i < result.Nodes.Length; i++)
+                    {
+                        var item = this.parent.generatedCryptoNodes[i];
+                        result.Nodes[i] = new NodeToPhase1(item.TrueNode.Initilize.Phase0(), item.PrototypeNode);
+                    }
+                    result.ShadowNode = new NodeToPhase1(this.parent.ShadowNode.Initilize.Phase0(), null);
+                    return result;
+                });
             }
 
 
-            public IEnumerable<HandOverToPhase2> Phase1(IEnumerable<HandOverToPhase1> fromPhaseOne)
+            public Task<HandOverToPhase2> Phase1Async(HandOverToPhase1 fromPhaseOne)
             {
                 if (this.Phase != PhaseState.Phase1)
                     throw new InvalidOperationException();
                 this.Phase = PhaseState.Phase2;
 
-                return InternalPhase1(fromPhaseOne).ToArray();
-
-                IEnumerable<HandOverToPhase2> InternalPhase1(IEnumerable<HandOverToPhase1> fromPhase1)
+                return Task.Run(() =>
                 {
-                    foreach (var item in fromPhase1)
+                    var result = new HandOverToPhase2() { Nodes = new NodeToPhase2[fromPhaseOne.Nodes.Length] };
+
+                    for (int i = 0; i < result.Nodes.Length; i++)
                     {
+                        var item = fromPhaseOne.Nodes[i];
                         var cn = this.parent.prototypeLookup[item.PrototypeNode];
                         var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
-                        yield return new HandOverToPhase2(ownExponented, cn.PrototypeNode);
+                        result.Nodes[i] = new NodeToPhase2(ownExponented, cn.PrototypeNode);
                     }
-
-                }
+                    result.ShadowNode = new NodeToPhase2(this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), null);
+                    return result;
+                });
             }
 
-            public void Phase2(IEnumerable<HandOverToPhase2> fromPhaseTwo)
+            public  Task Phase2Async(HandOverToPhase2 fromPhaseTwo)
             {
                 if (this.Phase != PhaseState.Phase2)
                     throw new InvalidOperationException();
 
-                foreach (var item in fromPhaseTwo)
-                {
-                    var cn = this.parent.prototypeLookup[item.PrototypeNode];
-                    cn.TrueNode.Initilize.Phase2(item.OtherExponented);
-                }
-                this.parent.CryptoLookup = this.parent.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
+                return Task.Run(() =>
+               {
 
-                this.Phase = PhaseState.Finished;
+                   foreach (var item in fromPhaseTwo.Nodes)
+                   {
+                       var cn = this.parent.prototypeLookup[item.PrototypeNode];
+                       cn.TrueNode.Initilize.Phase2(item.OtherExponented);
+                   }
+                   this.parent.ShadowNode.Initilize.Phase2(fromPhaseTwo.ShadowNode.OtherExponented);
+                   this.parent.CryptoLookup = this.parent.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
+
+                   this.Phase = PhaseState.Finished;
+               });
             }
 
 
-
             public class HandOverToPhase1
+            {
+                internal NodeToPhase1[] Nodes { get; set; }
+                internal NodeToPhase1 ShadowNode { get; set; }
+            }
+            public class HandOverToPhase2
+            {
+                internal NodeToPhase2[] Nodes { get; set; }
+                internal NodeToPhase2 ShadowNode { get; set; }
+            }
+
+            internal class NodeToPhase1
             {
                 internal BigInteger Value { get; }
                 internal Prototype.Node PrototypeNode { get; }
 
 
-                public HandOverToPhase1(BigInteger bigInteger, Prototype.Node prototypeNode)
+                public NodeToPhase1(BigInteger bigInteger, Prototype.Node prototypeNode)
                 {
                     this.Value = bigInteger;
                     this.PrototypeNode = prototypeNode;
                 }
             }
 
-            public class HandOverToPhase2
+            internal class NodeToPhase2
             {
                 internal BigInteger OtherExponented { get; }
                 internal Prototype.Node PrototypeNode { get; }
 
-                public HandOverToPhase2(BigInteger ownExponented, Prototype.Node prototypeNode)
+                public NodeToPhase2(BigInteger ownExponented, Prototype.Node prototypeNode)
                 {
                     this.OtherExponented = ownExponented;
                     this.PrototypeNode = prototypeNode;
