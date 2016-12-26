@@ -3,6 +3,7 @@ using System.Linq;
 using FogOfWar.Prototype;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FogOfWar.Test
 {
@@ -60,14 +61,20 @@ namespace FogOfWar.Test
         [TestMethod]
         public void FindTest1()
         {
-            var s1_1 = Map1.Scan.PrepareForPrope(N(), N(N1));
-            var s1_2 = Map2.Scan.PrepareForPrope(N(N1), N());
+            var t1_0 = Map1.Scan.PrepareForPropeAsync(N(), N(N1));
+            var t2_0 = Map2.Scan.PrepareForPropeAsync(N(N1), N());
+            Task.WaitAll(t1_0, t2_0);
+            var s1_1 = t1_0.Result;
+            var s1_2 = t2_0.Result;
 
-            var s2_1 = Map1.Scan.PreparePositions(s1_2);
-            var s2_2 = Map2.Scan.PreparePositions(s1_1);
+            var t1_1 = Map1.Scan.PreparePositionsAsync(s1_2);
+            var t2_1 = Map2.Scan.PreparePositionsAsync(s1_1);
+            Task.WaitAll(t2_1, t1_1);
+            var s2_1 = t1_1.Result;
+            var s2_2 = t2_1.Result;
 
-            var s3_1 = Map1.Scan.ExecuteProbe(s2_2).ToArray();
-            var s3_2 = Map2.Scan.ExecuteProbe(s2_1).ToArray();
+            var s3_1 = Map1.Scan.ExecuteProbeAsync(s2_2).Result.ToArray();
+            var s3_2 = Map2.Scan.ExecuteProbeAsync(s2_1).Result.ToArray();
 
             CollectionAssert.Contains(s3_1, N1);
             Assert.AreEqual(0, s3_2.Length);
@@ -101,14 +108,25 @@ namespace FogOfWar.Test
                 }
 
 
-            var s1_1 = Map1.Scan.PrepareForPrope(position1, search1);
-            var s1_2 = Map2.Scan.PrepareForPrope(position2, search2);
+            var t1_0 = Map1.Scan.PrepareForPropeAsync(position1, search1);
+            var t2_0 = Map2.Scan.PrepareForPropeAsync(position2, search2);
+            Task.WaitAll(t1_0, t2_0);
+            var s1_1 = t1_0.Result;
+            var s1_2 = t2_0.Result;
 
-            var s2_1 = Map1.Scan.PreparePositions(s1_2);
-            var s2_2 = Map2.Scan.PreparePositions(s1_1);
 
-            var s3_1 = Map1.Scan.ExecuteProbe(s2_2).ToArray();
-            var s3_2 = Map2.Scan.ExecuteProbe(s2_1).ToArray();
+
+            var t1_1 = Map1.Scan.PreparePositionsAsync(s1_2);
+            var t2_1 = Map2.Scan.PreparePositionsAsync(s1_1);
+            Task.WaitAll(t2_1, t1_1);
+            var s2_1 = t1_1.Result;
+            var s2_2 = t2_1.Result;
+
+            var t1 = Map1.Scan.ExecuteProbeAsync(s2_2);
+            var t2 = Map2.Scan.ExecuteProbeAsync(s2_1);
+            Task.WaitAll(t1, t2);
+            var s3_1 = t1.Result.ToArray();
+            var s3_2 = t2.Result.ToArray();
 
 
             for (int i = 0; i < data.Length; i++)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -65,20 +66,28 @@ namespace FogOfWar
                 return encrypted;
             }
 
-            public bool Scan(IEnumerable<BigInteger> collection)
+            public async Task<bool> ScanAsync(IEnumerable<BigInteger> collection)
             {
                 if (this.State != ScannerState.Prepared)
                     throw new InvalidOperationException();
 
                 try
                 {
-                    foreach (var toScann in collection)
-                    {
-                        var stripedZ = BigInteger.ModPow(BigInteger.ModPow(toScann, this.inverseBlendFactor, this.parent.Map.Prime), this.parent.InverseExponent, this.parent.Map.Prime);
-                        if (stripedZ == this.parent.originalZ)
-                            return true;
-                    }
-                    return false;
+
+                    var cancel = new System.Threading.CancellationTokenSource();
+
+                    var result = await collection.Select(
+                        async toScann =>
+                        {
+                            var token = cancel.Token;
+                            if (token.IsCancellationRequested)
+                                return BigInteger.Zero;
+                            var stripedZ = await Task.Run(() => BigInteger.ModPow(BigInteger.ModPow(toScann, this.inverseBlendFactor, this.parent.Map.Prime), this.parent.InverseExponent, this.parent.Map.Prime), token);
+                            return stripedZ;
+                        }
+                        ).WhenAnyAsync(stripedZ => stripedZ == this.parent.originalZ);
+                    cancel.Cancel();
+                    return result != null; //  if null we did not find anything.
                 }
                 finally
                 {

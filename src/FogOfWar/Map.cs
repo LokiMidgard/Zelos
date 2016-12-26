@@ -141,46 +141,53 @@ namespace FogOfWar
                 this.parent = parent;
             }
 
-            public IEnumerable<PreparedScan> PrepareForPrope(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
+            public async Task<PScan> PrepareForPropeAsync(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
             {
                 (var blendFactor, var inverseBlendfactor) = CryptoHelper.GenerateExponent(this.parent.Prime);
-                IEnumerable<PreparedScan> InternalPrepareForPrope()
-                {
-                    foreach (var node in this.toProbe)
-                    {
-                        var cryptoNode = this.parent.prototypeLookup[node];
-                        yield return new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor));
-                    }
-                }
-
                 this.position = ownPositions.ToArray();
+                this.toProbe = positionsToProbe.ToArray();
+                var result = new PScan() { Scanns = new PreparedScan[this.toProbe.Length] };
                 if (this.position.Length > this.parent.MaxShips)
                     throw new ArgumentOutOfRangeException("To many Positions");
-                this.toProbe = positionsToProbe.ToArray();
-                return InternalPrepareForPrope().ToArray();
+
+                await Task.WhenAll(Enumerable.Range(0, result.Scanns.Length).Select(i =>
+                {
+                    return Task.Run(() =>
+                    {
+                        var node = this.toProbe[i];
+                        var cryptoNode = this.parent.prototypeLookup[node];
+                        result.Scanns[i] = new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor));
+                    });
+
+                }));
+
+                return result;
 
             }
 
-            public IEnumerable<PreparedPosition> PreparePositions(IEnumerable<PreparedScan> scanns)
+            public async Task<PPosition> PreparePositionsAsync(PScan scanns)
             {
-                return InternalPreparePositions().ToArray();
+                var result = new PPosition() { Positions = new PreparedPosition[this.parent.MaxShips * scanns.Scanns.Length] };
 
-                IEnumerable<PreparedPosition> InternalPreparePositions()
+                await Task.WhenAll(Enumerable.Range(0, result.Positions.Length).Select(index =>
                 {
-                    for (int i = 0; i < this.parent.MaxShips; i++)
+                    return Task.Run(() =>
                     {
+                        var i = index / scanns.Scanns.Length;
+                        var j = index % scanns.Scanns.Length;
                         Node cryptoNode;
                         if (i < this.position.Length)
                             cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
                         else
                             cryptoNode = this.parent.ShadowNode;
 
-                        var scannArray = scanns.ToArray();
+                        //for (int j = 0; j < scanns.Scanns.Length; j++)
+                        result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition(cryptoNode.Scan.Position(scanns.Scanns[j].Value), j);
+                    });
+                }));
 
-                        for (int j = 0; j < scannArray.Length; j++)
-                            yield return new PreparedPosition(cryptoNode.Scan.Position(scannArray[j].Value), j);
-                    }
-                }
+
+                return result;
             }
 
             /// <summary>
@@ -188,23 +195,30 @@ namespace FogOfWar
             /// </summary>
             /// <param name="positions"></param>
             /// <returns></returns>
-            public IEnumerable<Prototype.Node> ExecuteProbe(IEnumerable<PreparedPosition> positions)
+            public async Task<ICollection<Prototype.Node>> ExecuteProbeAsync(PPosition positions)
             {
-                return InternalExecuteProbe().ToArray();
-                IEnumerable<Prototype.Node> InternalExecuteProbe()
-                {
-                    foreach (var p in positions.GroupBy(x => x.Index, x => x.Value))
-                    {
-                        var node = this.toProbe[p.Key];
-                        var crypto = this.parent.prototypeLookup[node];
-                        var found = crypto.TrueNode.Scan.Scan(p);
-                        if (found)
-                            yield return node;
-                    }
-                }
+
+                var searching = await Task.WhenAll(positions.Positions.GroupBy(x => x.Index, x => x.Value).Select(async p =>
+               {
+                   var node = this.toProbe[p.Key];
+                   var crypto = this.parent.prototypeLookup[node];
+                   var found = await crypto.TrueNode.Scan.ScanAsync(p);
+                   if (found)
+                       return node;
+                   return null;
+
+               }));
+
+                return searching.Where(x => x != null).ToArray();
             }
 
-            public class PreparedPosition
+
+            public class PPosition
+            {
+                internal PreparedPosition[] Positions { get; set; }
+            }
+
+            internal class PreparedPosition
             {
                 internal BigInteger Value { get; }
 
@@ -217,7 +231,12 @@ namespace FogOfWar
                 }
             }
 
-            public class PreparedScan
+            public class PScan
+            {
+                internal PreparedScan[] Scanns { get; set; }
+            }
+
+            internal class PreparedScan
             {
                 internal BigInteger Value { get; }
 
