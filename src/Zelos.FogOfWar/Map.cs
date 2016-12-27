@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Zelos.Common.Crypto;
 using Zelos.FogOfWar.Prototype;
+using Zelos.Scribe;
 
 namespace Zelos.FogOfWar
 {
@@ -58,7 +59,7 @@ namespace Zelos.FogOfWar
 
                 return Task.Run(() =>
                 {
-                    var result = new HandOverToPhase1() { Nodes = new NodeToPhase1[this.parent.generatedCryptoNodes.Length], Map = parent.PrototypeMap };
+                    var result = new HandOverToPhase1() { Nodes = new NodeToPhase1[this.parent.generatedCryptoNodes.Length], Map = this.parent.PrototypeMap };
                     for (int i = 0; i < result.Nodes.Length; i++)
                     {
                         var item = this.parent.generatedCryptoNodes[i];
@@ -89,9 +90,9 @@ namespace Zelos.FogOfWar
                         var item = fromPhaseOne.Nodes[i];
                         var cn = this.parent.prototypeIdLookup[item.PrototypeIdNode];
                         var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
-                        result.Nodes[i] = new NodeToPhase2() { OtherExponented = ownExponented, PrototypIdeNode = cn.PrototypeNode.id };
+                        result.Nodes[i] = new NodeToPhase2() { OtherExponented = ownExponented, PrototypeIdNode = cn.PrototypeNode.id };
                     }
-                    result.ShadowNode = new NodeToPhase2() { OtherExponented = this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), PrototypIdeNode = -1 };
+                    result.ShadowNode = new NodeToPhase2() { OtherExponented = this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), PrototypeIdNode = -1 };
                     return result;
                 });
             }
@@ -106,7 +107,7 @@ namespace Zelos.FogOfWar
 
                    foreach (var item in fromPhaseTwo.Nodes)
                    {
-                       var cn = this.parent.prototypeIdLookup[item.PrototypIdeNode];
+                       var cn = this.parent.prototypeIdLookup[item.PrototypeIdNode];
                        cn.TrueNode.Initilize.Phase2(item.OtherExponented);
                    }
                    this.parent.ShadowNode.Initilize.Phase2(fromPhaseTwo.ShadowNode.OtherExponented);
@@ -160,6 +161,9 @@ namespace Zelos.FogOfWar
                     }
                     return base.ToBytes(o);
                 }
+
+
+
             }
             public class HandOverToPhase2 : Scribe.AbstractScripture
             {
@@ -176,7 +180,7 @@ namespace Zelos.FogOfWar
                         {
                             var b = p.OtherExponented.ToByteArray();
                             mem.Write(b, 0, b.Length);
-                            b = BitConverter.GetBytes(p.PrototypIdeNode);
+                            b = BitConverter.GetBytes(p.PrototypeIdNode);
                             mem.Write(b, 0, 4);
 
                             return mem.ToArray();
@@ -205,13 +209,43 @@ namespace Zelos.FogOfWar
                 internal BigInteger Value { get; set; }
                 internal int PrototypeIdNode { get; set; }
 
+                public override bool Equals(object obj)
+                {
+                    if (obj == null || GetType() != obj.GetType())
+                        return false;
+
+                    var other = obj as NodeToPhase1;
+                    return other.Value == this.Value && other.PrototypeIdNode == this.PrototypeIdNode;
+                }
+
+                // override object.GetHashCode
+                public override int GetHashCode()
+                {
+                    return this.Value.GetHashCode() * 31 + this.PrototypeIdNode;
+                }
 
             }
 
             internal class NodeToPhase2
             {
                 internal BigInteger OtherExponented { get; set; }
-                internal int PrototypIdeNode { get; set; }
+                internal int PrototypeIdNode { get; set; }
+
+                public override bool Equals(object obj)
+                {
+                    if (obj == null || GetType() != obj.GetType())
+                        return false;
+
+                    var other = obj as NodeToPhase2;
+                    return other.OtherExponented == this.OtherExponented && other.PrototypeIdNode == this.PrototypeIdNode;
+                }
+
+                // override object.GetHashCode
+                public override int GetHashCode()
+                {
+                    return this.OtherExponented.GetHashCode() * 31 + this.PrototypeIdNode;
+                }
+
 
             }
             internal enum PhaseState
@@ -333,6 +367,22 @@ namespace Zelos.FogOfWar
 
                 internal int Index { get; set; }
 
+                public override bool Equals(object obj)
+                {
+                    if (obj == null || GetType() != obj.GetType())
+                        return false;
+
+                    var other = obj as PreparedPosition;
+                    return other.Value == this.Value && other.Index == this.Index;
+                }
+
+                // override object.GetHashCode
+                public override int GetHashCode()
+                {
+                    return this.Value.GetHashCode() * 31 + Index;
+                }
+
+
             }
 
             public class PScan : Scribe.AbstractScripture
@@ -364,6 +414,22 @@ namespace Zelos.FogOfWar
             internal class PreparedScan
             {
                 internal BigInteger Value { get; set; }
+
+                public override bool Equals(object obj)
+                {
+                    if (obj == null || GetType() != obj.GetType())
+                        return false;
+
+                    var other = obj as PreparedScan;
+                    return other.Value == this.Value;
+                }
+
+                // override object.GetHashCode
+                public override int GetHashCode()
+                {
+                    return this.Value.GetHashCode() ;
+                }
+
             }
 
         }

@@ -11,10 +11,7 @@ namespace Zelos.Scribe
 {
 
     public abstract class AbstractScripture
-
     {
-        [ScriptureValue(ScriptureValueType.Secret)]
-        internal BigInteger Secret { get; set; }
 
         public bool IsFrozen { get; private set; }
 
@@ -42,23 +39,22 @@ namespace Zelos.Scribe
         public AbstractScripture()
         {
             this.SubScripture = this.subScriptures.AsReadOnly();
-            this.Secret = Common.Crypto.Generate.Random(int.MaxValue);
         }
 
-        public String Serelize(bool includePrivate = false)
+        internal String Serelize(bool includePrivate = false)
         {
             ThrowNotFrozen();
             var s = new Serelizer();
             return s.Serelize(this, includePrivate);
         }
 
-        public static T Deserilize<T>(string data) where T : AbstractScripture, new()
+        internal static T Deserilize<T>(string data) where T : AbstractScripture
         {
             var s = new Serelizer();
             return s.Deserelize<T>(data);
         }
 
-        public async Task FreezeAsync()
+        internal async Task FreezeAsync(BigInteger secret)
         {
             if (this.IsFrozen)
                 return;
@@ -68,27 +64,33 @@ namespace Zelos.Scribe
 
             // Call Freeze on Subscriptures and this
             OnBeforeFreeze();
-            await Task.WhenAll(this.SubScripture.Select(x => x.FreezeAsync()));
+            await Task.WhenAll(this.SubScripture.Select(x => x.FreezeAsync(secret)));
             OnFreeze();
 
             // Calculate the Hash
             await Task.Run(() =>
             {
-                using (var hash = Common.Crypto.CalculateHash.Create())
-                {
-                    var propertys = this.GetType().GetRuntimeProperties().Where(x => x.GetCustomAttribute<ScriptureValueAttribute>() != null).OrderBy(x => x.Name);
-                    foreach (var p in propertys)
-                    {
-                        var value = ToBytes(p.GetValue(this));
-                        hash.AddData(value);
-                    }
-                    foreach (var s in this.SubScripture)
-                        hash.AddData(s.Hash);
-
-                    this.Hash = hash.GetResult();
-                }
+                this.Hash = CalculateHash(secret);
             });
             this.IsFrozen = true;
+        }
+
+        private byte[] CalculateHash(BigInteger secret)
+        {
+            using (var hash = Common.Crypto.CalculateHash.Create())
+            {
+                hash.AddData(secret.ToByteArray());
+                var propertys = this.GetType().GetRuntimeProperties().Where(x => x.GetCustomAttribute<ScriptureValueAttribute>() != null).OrderBy(x => x.Name);
+                foreach (var p in propertys)
+                {
+                    var value = ToBytes(p.GetValue(this));
+                    hash.AddData(value);
+                }
+                foreach (var s in this.SubScripture)
+                    hash.AddData(s.Hash);
+
+                return hash.GetResult();
+            }
         }
 
         internal void AfterDeserelize(byte[] hash, bool hasSecrets)
@@ -100,6 +102,12 @@ namespace Zelos.Scribe
             this.IsFrozen = true;
         }
 
+        internal bool CheckHash(BigInteger secrete)
+        {
+            ThrowNotFrozen();
+            var newHash = this.CalculateHash(secrete);
+            return newHash.SequenceEqual(this.hash);
+        }
 
         private void InitilizeSubScriptures()
         {
@@ -147,13 +155,23 @@ namespace Zelos.Scribe
                 return false;
 
             for (int i = 0; i < v1.Length; i++)
-                if (!object.Equals(v1[i], v2[i]))
-                    return false;
+                if (v1[i] is System.Collections.IEnumerable e1 && !(v1[i] is string))
+                {
+                    var e2 = v2[i] as System.Collections.IEnumerable;
+                    if (!e1.Cast<object>().SequenceEqual(e2.Cast<object>()))
+                        return false;
+                }
+                else
+                {
+
+                    if (!object.Equals(v1[i], v2[i]))
+                        return false;
+                }
 
             return true;
         }
 
-        public static bool Equals(AbstractScripture o1, AbstractScripture o2, bool ignoreUnknowSecrests)
+        public static bool Equals(AbstractScripture o1, AbstractScripture o2, bool ignoreUnknowSecrests, bool useHashIfFrozen = true)
         {
             if (object.ReferenceEquals(o1, o2))
                 return true;
@@ -164,10 +182,10 @@ namespace Zelos.Scribe
             if (o1.GetType() != o2.GetType())
                 return false;
 
-            if (!ignoreUnknowSecrests && (o1.HasSecrets != o2.HasSecrets))
-                return false;
+            if (useHashIfFrozen && o1.IsFrozen && o2.IsFrozen)
+                return o1.Hash.SequenceEqual(o2.Hash);
 
-            if (!ignoreUnknowSecrests && (o1.Secret != o2.Secret))
+            if (!ignoreUnknowSecrests && (o1.HasSecrets != o2.HasSecrets))
                 return false;
 
             if (!o1.AreEqual(o1, o2, ignoreUnknowSecrests))
@@ -197,7 +215,6 @@ namespace Zelos.Scribe
             var prime = 31;
             var result = 1;
 
-            result = result * prime + this.Secret.GetHashCode();
             foreach (var s in this.SubScripture)
                 result = result * prime + s?.GetHashCode() ?? 0;
 

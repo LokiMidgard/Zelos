@@ -69,6 +69,7 @@ namespace Zelos.Scribe
                 writer.WriteStartDocument();
                 writer.WriteStartElement("Scripture");
                 writer.WriteAttributeString("IncludeSecrets", includeSecrets.ToString());
+                writer.WriteAttributeString("Type", type.AssemblyQualifiedName);
 
                 Serelize(writer, obj, type.Name, includeSecrets);
 
@@ -85,16 +86,22 @@ namespace Zelos.Scribe
             var doc = XDocument.Parse(xml);
             var root = doc.Root;
             var type = typeof(T);
-            var obj = GenerateObject<T>();
             bool includeSecrets = false;
-            if (root.FirstAttribute != null && root.FirstAttribute.Name == "IncludeSecrets")
+            if (root.Attribute("IncludeSecrets") != null)
                 includeSecrets = bool.Parse(root.FirstAttribute.Value);
+            if (root.Attribute("Type") != null)
+                type = Type.GetType(root.Attribute("Type").Value);
+
+            if (!typeof(T).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+                throw new ArgumentException($"Xml has Incompatible type.({type.AssemblyQualifiedName} is not assignable to {typeof(T).AssemblyQualifiedName})");
+
+            var obj = GenerateObject(type) as AbstractScripture;
 
             var e = root.Elements().Single();
 
-            Deserelize(e, obj, typeof(T), includeSecrets);
+            Deserelize(e, obj, type, includeSecrets);
 
-            return obj;
+            return (T)obj;
         }
 
         private void Serelize(XmlWriter writer, AbstractScripture obj, string name, bool includeSecrets)
@@ -116,7 +123,7 @@ namespace Zelos.Scribe
             {
                 writer.WriteStartElement(s.Name);
 
-                var sGenerictype = s.PropertyType.GetTypeInfo().GenericTypeArguments[0];
+                var sGenerictype = GetTypeFromCollectionType(s.PropertyType);
 
                 foreach (var item in s.GetValue(obj) as IEnumerable<AbstractScripture>)
                     Serelize(writer, item, sGenerictype.Name, includeSecrets);
@@ -202,7 +209,7 @@ namespace Zelos.Scribe
 
                 var subElements = currentElement.Elements();
 
-                var sGenerictype = s.PropertyType.GetTypeInfo().GenericTypeArguments[0];
+                var sGenerictype = GetTypeFromCollectionType(s.PropertyType);
 
 
                 if (!subElements.All(x => x.Name == sGenerictype.Name))
@@ -249,11 +256,7 @@ namespace Zelos.Scribe
             else if (typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {
 
-                Type enumerableType;
-                if (type.GetTypeInfo().IsGenericType && type.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                    enumerableType = type.GetTypeInfo().GenericTypeArguments[0];
-                else
-                    enumerableType = type.GetTypeInfo().ImplementedInterfaces.First(x => x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>)).GenericTypeArguments[0];
+                var enumerableType = GetTypeFromCollectionType(type);
 
                 if (!element.Elements().All(x => x.Name == enumerableType.Name))
                     throw new Exception();
@@ -318,6 +321,16 @@ namespace Zelos.Scribe
                     return obj;
                 }
             }
+        }
+
+        private static Type GetTypeFromCollectionType(Type type)
+        {
+            Type enumerableType;
+            if (type.GetTypeInfo().IsGenericType && type.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                enumerableType = type.GetTypeInfo().GenericTypeArguments[0];
+            else
+                enumerableType = type.GetTypeInfo().ImplementedInterfaces.First(x => x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>)).GenericTypeArguments[0];
+            return enumerableType;
         }
 
         private object SetOrAddObjects(Type type, IEnumerable<object> objToAdd, object collection)
