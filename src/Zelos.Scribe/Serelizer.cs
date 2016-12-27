@@ -240,6 +240,12 @@ namespace Zelos.Scribe
             {
                 return this.objectWriter[type].Reader(element.Value);
             }
+            else if (type.GetTypeInfo().GetCustomAttribute<System.Runtime.Serialization.DataContractAttribute>() != null)
+            {
+                var serelizer = new System.Runtime.Serialization.DataContractSerializer(type);
+                using (var reader = element.Elements().Single().CreateReader())
+                    return serelizer.ReadObject(reader);
+            }
             else if (typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {
 
@@ -371,6 +377,14 @@ namespace Zelos.Scribe
             {
                 var dataToWrite = this.objectWriter[type].Writer(obj);
                 writer.WriteElementString(name, dataToWrite);
+            }
+            else if (type.GetTypeInfo().GetCustomAttribute<System.Runtime.Serialization.DataContractAttribute>() != null)
+            {
+                var serelizer = new System.Runtime.Serialization.DataContractSerializer(type);
+
+                writer.WriteStartElement(name);
+                serelizer.WriteObject(writer, obj);
+                writer.WriteEndElement();
             }
             else if (typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {

@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Zelos.FogOfWar.Prototype
 {
+    [DataContract(IsReference = true)]
     public class Map
     {
-        [System.Runtime.Serialization.IgnoreDataMember]
         public IReadOnlyCollection<Node> Nodes { get; }
 
 
+        [DataMember]
+        internal readonly List<Node> nodes = new List<Node>();
 
-        internal List<Node> nodes { get;  } = new List<Node>();
-
-        internal Guid id { get; set; } = Guid.NewGuid();
+        [DataMember]
+        private readonly Guid id = Guid.NewGuid();
 
         public Map()
         {

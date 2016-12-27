@@ -1,33 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Zelos.FogOfWar.Prototype
 {
+    [DataContract(IsReference = true)]
     public sealed class Node
     {
-        internal List<Node> edges { get;  } = new List<Node>();
-        internal int id { get; set; }
+        [DataMember]
+        internal readonly List<Node> edges = new List<Node>();
+        [DataMember]
+        private readonly int id;
+        [DataMember]
         public Map Map { get; internal set; }
 
-        [System.Runtime.Serialization.IgnoreDataMember]
-        public IReadOnlyCollection<Node> Edgees { get; }
+        public IReadOnlyCollection<Node> Edgees => this.edges.AsReadOnly();
 
-
-
-        internal Node(int id, Map map) : this()
+        internal Node(int id, Map map)
         {
             this.Map = map;
             this.id = id;
         }
-
-        private Node()
-        {
-            this.Edgees = this.edges.AsReadOnly();
-
-        }
-
-
 
         public override bool Equals(object obj)
         {
