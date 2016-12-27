@@ -11,7 +11,7 @@ namespace Zelos.FogOfWar.Prototype
         [DataMember]
         internal readonly List<Node> edges = new List<Node>();
         [DataMember]
-        private readonly int id;
+        internal readonly int id;
         [DataMember]
         public Map Map { get; internal set; }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Zelos.Common.Crypto;
+using Zelos.FogOfWar.Prototype;
 
 namespace Zelos.FogOfWar
 {
@@ -12,6 +13,7 @@ namespace Zelos.FogOfWar
     {
         private readonly CryptoNode[] generatedCryptoNodes;
         private readonly Dictionary<Prototype.Node, CryptoNode> prototypeLookup;
+        private readonly Dictionary<int, CryptoNode> prototypeIdLookup;
         private Dictionary<BigInteger, CryptoNode> CryptoLookup;
 
         internal BigInteger Prime { get; private set; }
@@ -22,10 +24,14 @@ namespace Zelos.FogOfWar
         public Initilizer Initilize { get; }
         public bool IsInitilzied => this.Initilize.Phase == Initilizer.PhaseState.Finished;
 
+        public Prototype.Map PrototypeMap { get; }
+
         public Map(Prototype.Map prototyp, int maxShips, BigInteger prime)
         {
             this.generatedCryptoNodes = prototyp.Nodes.Select(x => new CryptoNode { PrototypeNode = x, TrueNode = new Node(this) }).ToArray();
             this.prototypeLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode);
+            this.prototypeIdLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode.id);
+            this.PrototypeMap = prototyp;
             this.MaxShips = maxShips;
             this.Scan = new Scanner(this);
             this.Initilize = new Initilizer(this);
@@ -52,13 +58,13 @@ namespace Zelos.FogOfWar
 
                 return Task.Run(() =>
                 {
-                    var result = new HandOverToPhase1() { Nodes = new NodeToPhase1[this.parent.generatedCryptoNodes.Length] };
+                    var result = new HandOverToPhase1() { Nodes = new NodeToPhase1[this.parent.generatedCryptoNodes.Length], Map = parent.PrototypeMap };
                     for (int i = 0; i < result.Nodes.Length; i++)
                     {
                         var item = this.parent.generatedCryptoNodes[i];
-                        result.Nodes[i] = new NodeToPhase1() { Value = item.TrueNode.Initilize.Phase0(), PrototypeNode = item.PrototypeNode };
+                        result.Nodes[i] = new NodeToPhase1() { Value = item.TrueNode.Initilize.Phase0(), PrototypeIdNode = item.PrototypeNode.id };
                     }
-                    result.ShadowNode = new NodeToPhase1() { Value = this.parent.ShadowNode.Initilize.Phase0(), PrototypeNode = null };
+                    result.ShadowNode = new NodeToPhase1() { Value = this.parent.ShadowNode.Initilize.Phase0(), PrototypeIdNode = -1 };
                     return result;
                 });
             }
@@ -72,16 +78,20 @@ namespace Zelos.FogOfWar
 
                 return Task.Run(() =>
                 {
+
+                    if (!fromPhaseOne.Map.DeepEquals(this.parent.PrototypeMap))
+                        throw new ArgumentException("Using diferent Maps");
+
                     var result = new HandOverToPhase2() { Nodes = new NodeToPhase2[fromPhaseOne.Nodes.Length] };
 
                     for (int i = 0; i < result.Nodes.Length; i++)
                     {
                         var item = fromPhaseOne.Nodes[i];
-                        var cn = this.parent.prototypeLookup[item.PrototypeNode];
+                        var cn = this.parent.prototypeIdLookup[item.PrototypeIdNode];
                         var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
-                        result.Nodes[i] = new NodeToPhase2() { OtherExponented = ownExponented, PrototypeNode = cn.PrototypeNode };
+                        result.Nodes[i] = new NodeToPhase2() { OtherExponented = ownExponented, PrototypIdeNode = cn.PrototypeNode.id };
                     }
-                    result.ShadowNode = new NodeToPhase2() { OtherExponented = this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), PrototypeNode = null };
+                    result.ShadowNode = new NodeToPhase2() { OtherExponented = this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), PrototypIdeNode = -1 };
                     return result;
                 });
             }
@@ -96,7 +106,7 @@ namespace Zelos.FogOfWar
 
                    foreach (var item in fromPhaseTwo.Nodes)
                    {
-                       var cn = this.parent.prototypeLookup[item.PrototypeNode];
+                       var cn = this.parent.prototypeIdLookup[item.PrototypIdeNode];
                        cn.TrueNode.Initilize.Phase2(item.OtherExponented);
                    }
                    this.parent.ShadowNode.Initilize.Phase2(fromPhaseTwo.ShadowNode.OtherExponented);
@@ -114,16 +124,22 @@ namespace Zelos.FogOfWar
                 [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal NodeToPhase1 ShadowNode { get; set; }
 
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
+                internal Prototype.Map Map { get; set; }
 
                 protected override byte[] ToBytes(object o)
                 {
-                    if (o is NodeToPhase1 p)
+                    if (o is Prototype.Map m)
+                    {
+                        return m.id.ToByteArray();
+                    }
+                    else if (o is NodeToPhase1 p)
                     {
                         using (var mem = new MemoryStream())
                         {
                             var b = p.Value.ToByteArray();
                             mem.Write(b, 0, b.Length);
-                            b = BitConverter.GetBytes(p?.PrototypeNode?.GetHashCode() ?? 0);
+                            b = BitConverter.GetBytes(p.PrototypeIdNode);
                             mem.Write(b, 0, 4);
 
                             return mem.ToArray();
@@ -160,7 +176,7 @@ namespace Zelos.FogOfWar
                         {
                             var b = p.OtherExponented.ToByteArray();
                             mem.Write(b, 0, b.Length);
-                            b = BitConverter.GetBytes(p?.PrototypeNode?.GetHashCode() ?? 0);
+                            b = BitConverter.GetBytes(p.PrototypIdeNode);
                             mem.Write(b, 0, 4);
 
                             return mem.ToArray();
@@ -185,8 +201,9 @@ namespace Zelos.FogOfWar
 
             internal class NodeToPhase1
             {
+
                 internal BigInteger Value { get; set; }
-                internal Prototype.Node PrototypeNode { get; set; }
+                internal int PrototypeIdNode { get; set; }
 
 
             }
@@ -194,7 +211,7 @@ namespace Zelos.FogOfWar
             internal class NodeToPhase2
             {
                 internal BigInteger OtherExponented { get; set; }
-                internal Prototype.Node PrototypeNode { get; set; }
+                internal int PrototypIdeNode { get; set; }
 
             }
             internal enum PhaseState

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -8,19 +9,13 @@ namespace Zelos.FogOfWar.Prototype
     [DataContract(IsReference = true)]
     public class Map
     {
-        public IReadOnlyCollection<Node> Nodes { get; }
-
+        public IReadOnlyCollection<Node> Nodes => this.nodes.AsReadOnly();
 
         [DataMember]
         internal readonly List<Node> nodes = new List<Node>();
 
         [DataMember]
-        private readonly Guid id = Guid.NewGuid();
-
-        public Map()
-        {
-            this.Nodes = this.nodes.AsReadOnly();
-        }
+        internal readonly Guid id = Guid.NewGuid();
 
         public Node CreateNode()
         {
@@ -58,5 +53,38 @@ namespace Zelos.FogOfWar.Prototype
             return this.id.GetHashCode();
         }
 
+        internal bool DeepEquals(Map prototypeMap)
+        {
+            if (!this.Equals(prototypeMap))
+                return false;
+
+            if (this.Nodes.Count != prototypeMap.Nodes.Count)
+                return false;
+
+            foreach (var node in Nodes)
+            {
+                var index = prototypeMap.nodes.IndexOf(node);
+                if (index == -1)
+                    return false;
+                var otherNode = prototypeMap.nodes[index];
+
+                if (node.Edgees.Count != otherNode.edges.Count)
+                    return false;
+
+                foreach (var edge in node.Edgees)
+                {
+                    index = otherNode.edges.IndexOf(edge);
+                    if (index == -1)
+                        return false;
+                    var otherEdge = otherNode.edges[index];
+
+                    if (!edge.Equals(otherEdge))
+                        return false;
+
+                }
+            }
+
+            return true;
+        }
     }
 }
