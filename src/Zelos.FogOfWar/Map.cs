@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -55,9 +56,9 @@ namespace Zelos.FogOfWar
                     for (int i = 0; i < result.Nodes.Length; i++)
                     {
                         var item = this.parent.generatedCryptoNodes[i];
-                        result.Nodes[i] = new NodeToPhase1(item.TrueNode.Initilize.Phase0(), item.PrototypeNode);
+                        result.Nodes[i] = new NodeToPhase1() { Value = item.TrueNode.Initilize.Phase0(), PrototypeNode = item.PrototypeNode };
                     }
-                    result.ShadowNode = new NodeToPhase1(this.parent.ShadowNode.Initilize.Phase0(), null);
+                    result.ShadowNode = new NodeToPhase1() { Value = this.parent.ShadowNode.Initilize.Phase0(), PrototypeNode = null };
                     return result;
                 });
             }
@@ -78,9 +79,9 @@ namespace Zelos.FogOfWar
                         var item = fromPhaseOne.Nodes[i];
                         var cn = this.parent.prototypeLookup[item.PrototypeNode];
                         var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
-                        result.Nodes[i] = new NodeToPhase2(ownExponented, cn.PrototypeNode);
+                        result.Nodes[i] = new NodeToPhase2() { OtherExponented = ownExponented, PrototypeNode = cn.PrototypeNode };
                     }
-                    result.ShadowNode = new NodeToPhase2(this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), null);
+                    result.ShadowNode = new NodeToPhase2() { OtherExponented = this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), PrototypeNode = null };
                     return result;
                 });
             }
@@ -106,40 +107,95 @@ namespace Zelos.FogOfWar
             }
 
 
-            public class HandOverToPhase1
+            public class HandOverToPhase1 : Scribe.AbstractScripture
             {
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal NodeToPhase1[] Nodes { get; set; }
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal NodeToPhase1 ShadowNode { get; set; }
+
+
+                protected override byte[] ToBytes(object o)
+                {
+                    if (o is NodeToPhase1 p)
+                    {
+                        using (var mem = new MemoryStream())
+                        {
+                            var b = p.Value.ToByteArray();
+                            mem.Write(b, 0, b.Length);
+                            b = BitConverter.GetBytes(p?.PrototypeNode?.GetHashCode() ?? 0);
+                            mem.Write(b, 0, 4);
+
+                            return mem.ToArray();
+                        }
+
+                    }
+                    else if (o is NodeToPhase1[] pa)
+                    {
+                        using (var mem = new MemoryStream())
+                        {
+                            foreach (var item in pa)
+                            {
+                                var b = ToBytes(item);
+                                mem.Write(b, 0, b.Length);
+                            }
+                            return mem.ToArray();
+                        }
+                    }
+                    return base.ToBytes(o);
+                }
             }
-            public class HandOverToPhase2
+            public class HandOverToPhase2 : Scribe.AbstractScripture
             {
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal NodeToPhase2[] Nodes { get; set; }
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal NodeToPhase2 ShadowNode { get; set; }
+
+                protected override byte[] ToBytes(object o)
+                {
+                    if (o is NodeToPhase2 p)
+                    {
+                        using (var mem = new MemoryStream())
+                        {
+                            var b = p.OtherExponented.ToByteArray();
+                            mem.Write(b, 0, b.Length);
+                            b = BitConverter.GetBytes(p?.PrototypeNode?.GetHashCode() ?? 0);
+                            mem.Write(b, 0, 4);
+
+                            return mem.ToArray();
+                        }
+
+                    }
+                    else if (o is NodeToPhase2[] pa)
+                    {
+                        using (var mem = new MemoryStream())
+                        {
+                            foreach (var item in pa)
+                            {
+                                var b = ToBytes(item);
+                                mem.Write(b, 0, b.Length);
+                            }
+                            return mem.ToArray();
+                        }
+                    }
+                    return base.ToBytes(o);
+                }
             }
 
             internal class NodeToPhase1
             {
-                internal BigInteger Value { get; }
-                internal Prototype.Node PrototypeNode { get; }
+                internal BigInteger Value { get; set; }
+                internal Prototype.Node PrototypeNode { get; set; }
 
 
-                public NodeToPhase1(BigInteger bigInteger, Prototype.Node prototypeNode)
-                {
-                    this.Value = bigInteger;
-                    this.PrototypeNode = prototypeNode;
-                }
             }
 
             internal class NodeToPhase2
             {
-                internal BigInteger OtherExponented { get; }
-                internal Prototype.Node PrototypeNode { get; }
+                internal BigInteger OtherExponented { get; set; }
+                internal Prototype.Node PrototypeNode { get; set; }
 
-                public NodeToPhase2(BigInteger ownExponented, Prototype.Node prototypeNode)
-                {
-                    this.OtherExponented = ownExponented;
-                    this.PrototypeNode = prototypeNode;
-                }
             }
             internal enum PhaseState
             {
@@ -167,7 +223,7 @@ namespace Zelos.FogOfWar
                 (var blendFactor, var inverseBlendfactor) = Generate.InversableExponent(this.parent.Prime);
                 this.position = ownPositions.ToArray();
                 this.toProbe = positionsToProbe.ToArray();
-                var result = new PScan() { Scanns = new PreparedScan[this.toProbe.Length] };
+                var result = new PScan() { Scanns = new PreparedScan[this.toProbe.Length], BlendFactor = blendFactor };
                 if (this.position.Length > this.parent.MaxShips)
                     throw new ArgumentOutOfRangeException("To many Positions");
                 return Task.Run(() =>
@@ -176,7 +232,7 @@ namespace Zelos.FogOfWar
                     {
                         var node = this.toProbe[i];
                         var cryptoNode = this.parent.prototypeLookup[node];
-                        result.Scanns[i] = new PreparedScan(cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor));
+                        result.Scanns[i] = new PreparedScan() { Value = cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor) };
 
                     });
                     return result;
@@ -202,7 +258,7 @@ namespace Zelos.FogOfWar
                            cryptoNode = this.parent.ShadowNode;
 
                        //for (int j = 0; j < scanns.Scanns.Length; j++)
-                       result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition(cryptoNode.Scan.Position(scanns.Scanns[j].Value), j);
+                       result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition() { Value = cryptoNode.Scan.Position(scanns.Scanns[j].Value), Index = j };
                    });
                    return result;
                });
@@ -231,37 +287,66 @@ namespace Zelos.FogOfWar
             }
 
 
-            public class PPosition
+            public class PPosition : Scribe.AbstractScripture
             {
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal PreparedPosition[] Positions { get; set; }
+                protected override byte[] ToBytes(object o)
+                {
+                    if (o is PreparedPosition[] p)
+                    {
+                        using (var mem = new MemoryStream())
+                        {
+                            foreach (var item in p)
+                            {
+                                var b = item.Value.ToByteArray();
+                                mem.Write(b, 0, b.Length);
+                                mem.Write(BitConverter.GetBytes(item.Index), 0, 4);
+                            }
+                            return mem.ToArray();
+                        }
+                    }
+                    return base.ToBytes(o);
+                }
             }
 
             internal class PreparedPosition
             {
-                internal BigInteger Value { get; }
+                internal BigInteger Value { get; set; }
 
-                internal int Index { get; }
+                internal int Index { get; set; }
 
-                public PreparedPosition(BigInteger value, int index)
-                {
-                    this.Value = value;
-                    this.Index = index;
-                }
             }
 
-            public class PScan
+            public class PScan : Scribe.AbstractScripture
             {
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Secret)]
+                internal BigInteger BlendFactor { get; set; }
+
+                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal PreparedScan[] Scanns { get; set; }
+
+                protected override byte[] ToBytes(object o)
+                {
+                    if (o is PreparedScan[] p)
+                    {
+                        using (var mem = new MemoryStream())
+                        {
+                            foreach (var item in p)
+                            {
+                                var b = item.Value.ToByteArray();
+                                mem.Write(b, 0, b.Length);
+                            }
+                            return mem.ToArray();
+                        }
+                    }
+                    return base.ToBytes(o);
+                }
             }
 
             internal class PreparedScan
             {
-                internal BigInteger Value { get; }
-
-                internal PreparedScan(BigInteger value)
-                {
-                    this.Value = value;
-                }
+                internal BigInteger Value { get; set; }
             }
 
         }

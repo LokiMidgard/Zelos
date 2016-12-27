@@ -146,7 +146,7 @@ namespace Zelos.Scribe
             var enumerable = GetScriptusPropertysToSerelize(type, includeSecrets);
 
 
-            var hash = Convert.FromBase64String( e.Attribute("Hash").Value);
+            var hash = Convert.FromBase64String(e.Attribute("Hash").Value);
 
             var childs = e.Elements().GetEnumerator();
 
@@ -226,7 +226,7 @@ namespace Zelos.Scribe
 
         private object Deserelize(XElement element, Type type)
         {
-            if (element.IsEmpty)
+            if (element.IsEmpty && !typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
                 return null;
 
             if (this.objectWriter.ContainsKey(type))
@@ -297,27 +297,26 @@ namespace Zelos.Scribe
             else
                 enumerableType = type.GetTypeInfo().ImplementedInterfaces.First(x => x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>)).GenericTypeArguments[0];
 
-
-            var obj = GenerateObject(type);
-
-            if (typeof(ICollection<>).MakeGenericType(enumerableType).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            if (typeof(ICollection<>).MakeGenericType(enumerableType).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()) && !type.IsArray)
             {
+                var obj = GenerateObject(type);
                 var method = typeof(ICollection<>).MakeGenericType(enumerableType).GetRuntimeMethod(nameof(ICollection<object>.Add), new Type[] { enumerableType });
                 foreach (var o in objToAdd)
                     method.Invoke(obj, new object[] { o });
+                return obj;
             }
-            else if (typeof(IEnumerable<>).MakeGenericType(enumerableType) == type)
+            else if (typeof(IEnumerable<>).MakeGenericType(enumerableType) == type || type.IsArray)
             {
                 var oldArray = objToAdd.ToArray();
                 var newArray = Array.CreateInstance(enumerableType, oldArray.Length);
                 for (int i = 0; i < oldArray.Length; i++)
                     newArray.SetValue(oldArray[i], i);
+                return newArray;
             }
             else
             {
                 throw new NotImplementedException();
             }
-            return obj;
         }
 
         private void SerelizeAsync(XmlWriter writer, object obj, string name, Type type)

@@ -47,14 +47,14 @@ namespace Zelos.FogOfWar.Test
             var t1_1 = Map1.Initilize.Phase0Async();
             var t1_2 = Map2.Initilize.Phase0Async();
             Task.WaitAll(t1_1, t1_2);
-            var phase1_1 = t1_1.Result;
-            var phase1_2 = t1_2.Result;
+            var phase1_1 = TestSerelisation(t1_1.Result);
+            var phase1_2 = TestSerelisation(t1_2.Result);
 
             var t2_1 = Map1.Initilize.Phase1Async(phase1_2);
             var t2_2 = Map2.Initilize.Phase1Async(phase1_1);
             Task.WaitAll(t2_1, t2_2);
-            var phase2_1 = t2_1.Result;
-            var phase2_2 = t2_2.Result;
+            var phase2_1 = TestSerelisation(t2_1.Result);
+            var phase2_2 = TestSerelisation(t2_2.Result);
 
             Task.WaitAll(Map1.Initilize.Phase2Async(phase2_2),
                 Map2.Initilize.Phase2Async(phase2_1));
@@ -117,14 +117,14 @@ namespace Zelos.FogOfWar.Test
             var t1_0 = Map1.Scan.PrepareForPropeAsync(position1, search1);
             var t2_0 = Map2.Scan.PrepareForPropeAsync(position2, search2);
             Task.WaitAll(t1_0, t2_0);
-            var s1_1 = t1_0.Result;
-            var s1_2 = t2_0.Result;
+            var s1_1 = TestSerelisation(t1_0.Result);
+            var s1_2 = TestSerelisation(t2_0.Result);
 
             var t1_1 = Map1.Scan.PreparePositionsAsync(s1_2);
             var t2_1 = Map2.Scan.PreparePositionsAsync(s1_1);
             Task.WaitAll(t2_1, t1_1);
-            var s2_1 = t1_1.Result;
-            var s2_2 = t2_1.Result;
+            var s2_1 = TestSerelisation(t1_1.Result);
+            var s2_2 = TestSerelisation(t2_1.Result);
 
             var t1 = Map1.Scan.ExecuteProbeAsync(s2_2);
             var t2 = Map2.Scan.ExecuteProbeAsync(s2_1);
@@ -146,5 +146,12 @@ namespace Zelos.FogOfWar.Test
             }
         }
 
+        private static T TestSerelisation<T>(T result) where T : Scribe.AbstractScripture, new()
+        {
+            result.FreezeAsync().Wait();
+            var xml = result.Serelize(false);
+            return Scribe.AbstractScripture.Deserilize<T>(xml);
+
+        }
     }
 }

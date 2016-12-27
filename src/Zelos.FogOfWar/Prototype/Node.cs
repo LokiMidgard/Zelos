@@ -16,6 +16,7 @@ namespace Zelos.FogOfWar.Prototype
             this.Edgees = this.edges.AsReadOnly();
         }
 
+        
         public Map Map { get; }
 
         public IReadOnlyCollection<Node> Edgees { get; }
