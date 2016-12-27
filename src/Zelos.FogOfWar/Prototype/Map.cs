@@ -11,7 +11,7 @@ namespace Zelos.FogOfWar.Prototype
 
 
 
-        internal List<Node> nodes { get; set; } = new List<Node>();
+        internal List<Node> nodes { get;  } = new List<Node>();
 
         internal Guid id { get; set; } = Guid.NewGuid();
 

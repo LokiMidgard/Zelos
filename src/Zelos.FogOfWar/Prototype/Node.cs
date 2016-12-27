@@ -6,8 +6,14 @@ namespace Zelos.FogOfWar.Prototype
 {
     public sealed class Node
     {
-        internal List<Node> edges { get; set; } = new List<Node>();
+        internal List<Node> edges { get;  } = new List<Node>();
         internal int id { get; set; }
+        public Map Map { get; internal set; }
+
+        [System.Runtime.Serialization.IgnoreDataMember]
+        public IReadOnlyCollection<Node> Edgees { get; }
+
+
 
         internal Node(int id, Map map) : this()
         {
@@ -21,10 +27,6 @@ namespace Zelos.FogOfWar.Prototype
 
         }
 
-        public Map Map { get; internal set; }
-
-        [System.Runtime.Serialization.IgnoreDataMember]
-        public IReadOnlyCollection<Node> Edgees { get; }
 
 
         public override bool Equals(object obj)

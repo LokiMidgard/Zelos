@@ -162,7 +162,8 @@ namespace Zelos.Scribe
                 var currentElement0 = childs.Current;
                 if (currentElement0.Name != p.Name)
                     throw new Exception();
-                var newObject = Deserelize(currentElement0, p.PropertyType);
+                var originalObject = p.GetValue(obj);
+                var newObject = Deserelize(currentElement0, p.PropertyType, originalObject);
                 p.SetValue(obj, newObject);
             }
 
@@ -217,9 +218,10 @@ namespace Zelos.Scribe
                     Deserelize(subElement, newObject, t, includeSecrets);
                     newList.Add(newObject);
                 }
-
-                var list = SetOrAddObjects(s.PropertyType, newList);
-                s.SetValue(obj, list);
+                var oringalObject = s.GetValue(obj);
+                var list = SetOrAddObjects(s.PropertyType, newList, oringalObject);
+                if (list != null)
+                    s.SetValue(obj, list);
 
                 hasMoreElemets = childs.MoveNext();
                 currentElement = childs.Current;
@@ -229,9 +231,9 @@ namespace Zelos.Scribe
             obj.AfterDeserelize(hash, includeSecrets);
         }
 
-        private object Deserelize(XElement element, Type type)
+        private object Deserelize(XElement element, Type type, object originalObject)
         {
-            if (element.IsEmpty && !typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()) &&element.Attribute("ref")==null)
+            if (element.IsEmpty && !typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()) && element.Attribute("ref") == null)
                 return null;
 
             if (this.objectWriter.ContainsKey(type))
@@ -254,11 +256,11 @@ namespace Zelos.Scribe
 
                 foreach (var e in element.Elements())
                 {
-                    var newObject = Deserelize(e, enumerableType);
+                    var newObject = Deserelize(e, enumerableType, null);
                     objToAdd.Add(newObject);
                 }
 
-                var obj = SetOrAddObjects(type, objToAdd);
+                var obj = SetOrAddObjects(type, objToAdd, originalObject);
                 return obj;
 
             }
@@ -294,11 +296,13 @@ namespace Zelos.Scribe
                         if (currentElement.Name != p.Name)
                             throw new Exception();
 
-                        var newObject = Deserelize(currentElement, p.PropertyType);
+                        var originalPropertyObject = p.GetValue(obj);
+                        var newObject = Deserelize(currentElement, p.PropertyType, originalPropertyObject);
 
                         try
                         {
-                            p.SetValue(obj, newObject);
+                            if (newObject != null)
+                                p.SetValue(obj, newObject);
                         }
                         catch (System.ArgumentException e)
                         {
@@ -310,7 +314,7 @@ namespace Zelos.Scribe
             }
         }
 
-        private object SetOrAddObjects(Type type, IEnumerable<object> objToAdd)
+        private object SetOrAddObjects(Type type, IEnumerable<object> objToAdd, object collection)
         {
 
             Type enumerableType;
@@ -319,7 +323,16 @@ namespace Zelos.Scribe
             else
                 enumerableType = type.GetTypeInfo().ImplementedInterfaces.First(x => x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>)).GenericTypeArguments[0];
 
-            if (typeof(ICollection<>).MakeGenericType(enumerableType).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()) && !type.IsArray)
+            if (collection != null
+                && typeof(ICollection<>).MakeGenericType(enumerableType).GetTypeInfo().IsAssignableFrom(collection.GetType().GetTypeInfo())
+                && !(bool)typeof(ICollection<>).MakeGenericType(enumerableType).GetRuntimeProperty(nameof(ICollection<object>.IsReadOnly)).GetValue(collection))
+            {
+                var method = typeof(ICollection<>).MakeGenericType(enumerableType).GetRuntimeMethod(nameof(ICollection<object>.Add), new Type[] { enumerableType });
+                foreach (var o in objToAdd)
+                    method.Invoke(collection, new object[] { o });
+                return null;
+            }
+            else if (typeof(ICollection<>).MakeGenericType(enumerableType).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()) && !type.IsArray)
             {
                 var obj = GenerateObject(type);
                 var method = typeof(ICollection<>).MakeGenericType(enumerableType).GetRuntimeMethod(nameof(ICollection<object>.Add), new Type[] { enumerableType });
