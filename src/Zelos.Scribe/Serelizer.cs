@@ -13,7 +13,8 @@ namespace Zelos.Scribe
     {
 
         private readonly Dictionary<Type, (Func<object, string> Writer, Func<string, object> Reader)> objectWriter = new Dictionary<Type, (Func<object, string> Writer, Func<string, object> Reader)>();
-
+        private readonly Dictionary<object, Guid> referenceReader = new Dictionary<object, Guid>(new ReferenceEqualityComparer());
+        private readonly Dictionary<Guid, object> idLookup = new Dictionary<Guid, object>();
 
         public Serelizer()
         {
@@ -58,6 +59,8 @@ namespace Zelos.Scribe
         }
         public string Serelize(AbstractScripture obj, bool includeSecrets)
         {
+            this.idLookup.Clear();
+            this.referenceReader.Clear();
             var b = new StringBuilder();
             var type = obj.GetType();
             using (var writer = System.Xml.XmlWriter.Create(b))
@@ -77,6 +80,8 @@ namespace Zelos.Scribe
 
         public T Deserelize<T>(string xml) where T : AbstractScripture
         {
+            this.idLookup.Clear();
+            this.referenceReader.Clear();
             var doc = XDocument.Parse(xml);
             var root = doc.Root;
             var type = typeof(T);
@@ -226,7 +231,7 @@ namespace Zelos.Scribe
 
         private object Deserelize(XElement element, Type type)
         {
-            if (element.IsEmpty && !typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            if (element.IsEmpty && !typeof(IEnumerable<object>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()) &&element.Attribute("ref")==null)
                 return null;
 
             if (this.objectWriter.ContainsKey(type))
@@ -263,28 +268,45 @@ namespace Zelos.Scribe
             }
             else // Serelize the Propertys
             {
-                var propertys = GetPropertys(type);
-
-                var obj = GenerateObject(type);
-
-                var childs = element.Elements().GetEnumerator();
-
-                foreach (var p in propertys)
+                var refAttribute = element.Attribute("ref");
+                var idAttribute = element.Attribute("id");
+                if (refAttribute != null)
                 {
-                    if (p.GetIndexParameters().Length > 0)
-                        continue;
-                    if (!childs.MoveNext())
-                        throw new Exception();
-
-                    var currentElement = childs.Current;
-                    if (currentElement.Name != p.Name)
-                        throw new Exception();
-
-                    var newObject = Deserelize(currentElement, p.PropertyType);
-
-                    p.SetValue(obj, newObject);
+                    return this.idLookup[Guid.Parse(refAttribute.Value)];
                 }
-                return obj;
+                else
+                {
+                    var propertys = GetPropertys(type);
+
+                    var obj = GenerateObject(type);
+                    this.idLookup.Add(Guid.Parse(idAttribute.Value), obj);
+
+                    var childs = element.Elements().GetEnumerator();
+
+                    foreach (var p in propertys)
+                    {
+                        if (p.GetIndexParameters().Length > 0)
+                            continue;
+                        if (!childs.MoveNext())
+                            throw new Exception();
+
+                        var currentElement = childs.Current;
+                        if (currentElement.Name != p.Name)
+                            throw new Exception();
+
+                        var newObject = Deserelize(currentElement, p.PropertyType);
+
+                        try
+                        {
+                            p.SetValue(obj, newObject);
+                        }
+                        catch (System.ArgumentException e)
+                        {
+                            throw new ArgumentException($"The Property {p.Name}  on the Type {p.DeclaringType} has no Set Method.", e);
+                        }
+                    }
+                    return obj;
+                }
             }
         }
 
@@ -323,7 +345,10 @@ namespace Zelos.Scribe
         {
 
             if (obj == null)
+            {
+                writer.WriteElementString(name, "");
                 return;
+            }
 
 
             if (obj is AbstractScripture)
@@ -353,17 +378,26 @@ namespace Zelos.Scribe
             }
             else // Serelize the Propertys
             {
-                var propertys = GetPropertys(type);
-
                 writer.WriteStartElement(name);
 
-                foreach (var p in propertys)
+                if (this.referenceReader.ContainsKey(obj))
                 {
-                    if (p.GetIndexParameters().Length > 0)
-                        continue;
+                    writer.WriteAttributeString("ref", this.referenceReader[obj].ToString());
+                }
+                else
+                {
+                    this.referenceReader.Add(obj, Guid.NewGuid());
+                    writer.WriteAttributeString("id", this.referenceReader[obj].ToString());
+
+                    var propertys = GetPropertys(type);
 
 
-                    SerelizeAsync(writer, p.GetValue(obj), p.Name, p.PropertyType);
+                    foreach (var p in propertys)
+                    {
+                        if (p.GetIndexParameters().Length > 0)
+                            continue;
+                        SerelizeAsync(writer, p.GetValue(obj), p.Name, p.PropertyType);
+                    }
                 }
 
                 writer.WriteEndElement();
@@ -376,12 +410,12 @@ namespace Zelos.Scribe
 
             if (type.GetTypeInfo().IsInterface)
             {
-                propertys.AddRange(type.GetTypeInfo().DeclaredProperties);
-                propertys.AddRange(type.GetTypeInfo().ImplementedInterfaces.SelectMany(x => x.GetTypeInfo().DeclaredProperties));
+                propertys.AddRange(type.GetTypeInfo().DeclaredProperties.Where(x => x.GetCustomAttribute<System.Runtime.Serialization.IgnoreDataMemberAttribute>(true) == null));
+                propertys.AddRange(type.GetTypeInfo().ImplementedInterfaces.SelectMany(x => x.GetTypeInfo().DeclaredProperties).Where(x => x.GetCustomAttribute<System.Runtime.Serialization.IgnoreDataMemberAttribute>(true) == null));
             }
             else
             {
-                propertys.AddRange(type.GetRuntimeProperties());
+                propertys.AddRange(type.GetRuntimeProperties().Where(x => x.GetCustomAttribute<System.Runtime.Serialization.IgnoreDataMemberAttribute>(true) == null));
             }
 
             return propertys;

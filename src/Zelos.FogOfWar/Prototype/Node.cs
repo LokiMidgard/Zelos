@@ -6,19 +6,24 @@ namespace Zelos.FogOfWar.Prototype
 {
     public sealed class Node
     {
-        internal readonly List<Node> edges = new List<Node>();
-        private readonly int id;
+        internal List<Node> edges { get; set; } = new List<Node>();
+        internal int id { get; set; }
 
-        internal Node(int id, Map map)
+        internal Node(int id, Map map) : this()
         {
             this.Map = map;
             this.id = id;
-            this.Edgees = this.edges.AsReadOnly();
         }
 
-        
-        public Map Map { get; }
+        private Node()
+        {
+            this.Edgees = this.edges.AsReadOnly();
 
+        }
+
+        public Map Map { get; internal set; }
+
+        [System.Runtime.Serialization.IgnoreDataMember]
         public IReadOnlyCollection<Node> Edgees { get; }
 
 

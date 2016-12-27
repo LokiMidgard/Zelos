@@ -6,11 +6,14 @@ namespace Zelos.FogOfWar.Prototype
 {
     public class Map
     {
+        [System.Runtime.Serialization.IgnoreDataMember]
         public IReadOnlyCollection<Node> Nodes { get; }
 
-        private readonly List<Node> nodes = new List<Node>();
 
-        private Guid id = Guid.NewGuid();
+
+        internal List<Node> nodes { get; set; } = new List<Node>();
+
+        internal Guid id { get; set; } = Guid.NewGuid();
 
         public Map()
         {
