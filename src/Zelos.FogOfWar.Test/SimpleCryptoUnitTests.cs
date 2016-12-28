@@ -2,10 +2,10 @@ using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
-using Zelos.FogOfWar;
 using Zelos.Common.Crypto;
+using Zelos.Mapping.FogOfWar;
 
-namespace FogOfWar.Test
+namespace Zelos.Mapping.Test
 {
     [TestClass]
     public class SimpleCryptoUnitTests
@@ -13,14 +13,15 @@ namespace FogOfWar.Test
         [TestMethod]
         public void TestInitialisation()
         {
-            var map = new Zelos.FogOfWar.Prototype.Map();
-            var n1 = map.CreateNode();
-            var n2 = map.CreateNode();
+            var map = Map.Create()
+                .AddNode(out var n1)
+                .AddNode(out var n2)
+                .GetResult();
 
 
             var p = Generate.Prime();
-            var cMap1 = new FogMap(map, 1, p);
-            var cMap2 = new FogMap(map, 1, p);
+            var cMap1 = FogMap.Create(map, 1, p);
+            var cMap2 = FogMap.Create(map, 1, p);
 
             var t1_1 = cMap1.Initilize.Phase0Async();
             var t1_2 = cMap2.Initilize.Phase0Async();

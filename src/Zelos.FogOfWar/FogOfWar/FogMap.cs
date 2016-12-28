@@ -5,47 +5,50 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Zelos.Common.Crypto;
-using Zelos.FogOfWar.Prototype;
 using Zelos.Scribe;
 
-namespace Zelos.FogOfWar
+namespace Zelos.Mapping.FogOfWar
 {
-    public class FogMap
+    public class FogMap<TNode, TEdged>
     {
-        private readonly CryptoNode[] generatedCryptoNodes;
-        private readonly Dictionary<Prototype.Node, CryptoNode> prototypeLookup;
-        private readonly Dictionary<int, CryptoNode> prototypeIdLookup;
-        private Dictionary<BigInteger, CryptoNode> CryptoLookup;
+        private readonly EntangelNode[] generatedCryptoNodes;
+        private readonly Dictionary<Node<TNode, TEdged>, EntangelNode> prototypeLookup;
+        private readonly Dictionary<int, EntangelNode> prototypeIdLookup;
+        private Dictionary<BigInteger, EntangelNode> CryptoLookup;
 
         internal BigInteger Prime { get; private set; }
         public int MaxShips { get; }
         public Scanner Scan { get; }
 
-        private Node ShadowNode { get; }
+        private CryptoNode<TNode, TEdged> ShadowNode { get; }
         public Initilizer Initilize { get; }
         public bool IsInitilzied => this.Initilize.Phase == Initilizer.PhaseState.Finished;
 
-        public Prototype.Map PrototypeMap { get; }
+        public Map<TNode, TEdged> PrototypeMap { get; }
 
-        public FogMap(Prototype.Map prototyp, int maxShips, BigInteger prime)
+        private FogMap(Map<TNode, TEdged> prototyp, int maxShips, BigInteger prime)
         {
-            this.generatedCryptoNodes = prototyp.Nodes.Select(x => new CryptoNode { PrototypeNode = x, TrueNode = new Node(this) }).ToArray();
+            this.generatedCryptoNodes = prototyp.Nodes.Select(x => new EntangelNode { PrototypeNode = x, TrueNode = new CryptoNode<TNode, TEdged>(this) }).ToArray();
             this.prototypeLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode);
             this.prototypeIdLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode.id);
             this.PrototypeMap = prototyp;
             this.MaxShips = maxShips;
             this.Scan = new Scanner(this);
             this.Initilize = new Initilizer(this);
-            this.ShadowNode = new Node(this);
+            this.ShadowNode = new CryptoNode<TNode, TEdged>(this);
             this.Prime = prime;
         }
 
+        public static FogMap<TNode, TEdged> Create(Map<TNode, TEdged> prototyp, int maxShips, BigInteger prime)
+        {
+            return new FogMap<TNode, TEdged>(prototyp, maxShips, prime);
+        }
 
         public class Initilizer
         {
             internal PhaseState Phase { get; private set; }
-            private readonly FogMap parent;
-            public Initilizer(FogMap parent)
+            private readonly FogMap<TNode, TEdged> parent;
+            public Initilizer(FogMap<TNode, TEdged> parent)
             {
                 this.parent = parent;
             }
@@ -126,11 +129,11 @@ namespace Zelos.FogOfWar
                 internal NodeToPhase1 ShadowNode { get; set; }
 
                 [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
-                internal Prototype.Map Map { get; set; }
+                internal Map<TNode, TEdged> Map { get; set; }
 
                 protected override byte[] ToBytes(object o)
                 {
-                    if (o is Prototype.Map m)
+                    if (o is Map<TNode, TEdged> m)
                     {
                         return m.id.ToByteArray();
                     }
@@ -260,16 +263,16 @@ namespace Zelos.FogOfWar
 
         public class Scanner
         {
-            private readonly FogMap parent;
-            private Prototype.Node[] position;
-            private Prototype.Node[] toProbe;
+            private readonly FogMap<TNode, TEdged> parent;
+            private Mapping.Node<TNode, TEdged>[] position;
+            private Mapping.Node<TNode, TEdged>[] toProbe;
 
-            internal Scanner(FogMap parent)
+            internal Scanner(FogMap<TNode, TEdged> parent)
             {
                 this.parent = parent;
             }
 
-            public Task<PScan> PrepareForPropeAsync(IEnumerable<Prototype.Node> ownPositions, IEnumerable<Prototype.Node> positionsToProbe)
+            public Task<PScan> PrepareForPropeAsync(IEnumerable<Mapping.Node<TNode, TEdged>> ownPositions, IEnumerable<Mapping.Node<TNode, TEdged>> positionsToProbe)
             {
                 (var blendFactor, var inverseBlendfactor) = Generate.InversableExponent(this.parent.Prime);
                 this.position = ownPositions.ToArray();
@@ -302,7 +305,7 @@ namespace Zelos.FogOfWar
                    {
                        var i = index / scanns.Scanns.Length;
                        var j = index % scanns.Scanns.Length;
-                       Node cryptoNode;
+                       CryptoNode<TNode, TEdged> cryptoNode;
                        if (i < this.position.Length)
                            cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
                        else
@@ -320,7 +323,7 @@ namespace Zelos.FogOfWar
             /// </summary>
             /// <param name="positions"></param>
             /// <returns></returns>
-            public async Task<ICollection<Prototype.Node>> ExecuteProbeAsync(PPosition positions)
+            public async Task<ICollection<Mapping.Node<TNode, TEdged>>> ExecuteProbeAsync(PPosition positions)
             {
 
                 var searching = await Task.WhenAll(positions.Positions.GroupBy(x => x.Index, x => x.Value).Select(async p =>
@@ -427,7 +430,7 @@ namespace Zelos.FogOfWar
                 // override object.GetHashCode
                 public override int GetHashCode()
                 {
-                    return this.Value.GetHashCode() ;
+                    return this.Value.GetHashCode();
                 }
 
             }
@@ -435,10 +438,20 @@ namespace Zelos.FogOfWar
         }
 
 
-        private class CryptoNode
+
+        private class EntangelNode
         {
-            public Prototype.Node PrototypeNode { get; set; }
-            public Node TrueNode { get; set; }
+            public Node<TNode, TEdged> PrototypeNode { get; set; }
+            public CryptoNode<TNode, TEdged> TrueNode { get; set; }
         }
+    }
+
+    public static class FogMap
+    {
+        public static FogMap<TNode, TEdged> Create<TNode, TEdged>(Map<TNode, TEdged> prototyp, int maxShips, BigInteger prime)
+        {
+            return FogMap<TNode, TEdged>.Create(prototyp, maxShips, prime);
+        }
+
     }
 }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup Label="Configuration">
-    <RootNamespace>Zelos.FogOfWar</RootNamespace>
-    <AssemblyName>Zelos.FogOfWar</AssemblyName>
+    <RootNamespace>Zelos.Mapping</RootNamespace>
+    <AssemblyName>Zelos.Mapping</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>

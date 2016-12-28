@@ -1,48 +1,51 @@
 using System;
 using System.Linq;
-using Zelos.FogOfWar.Prototype;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Zelos.Common.Crypto;
+using FogMap = Zelos.Mapping.FogOfWar.FogMap<object, object>;
+using Node = Zelos.Mapping.Node<object, object>;
 
-namespace Zelos.FogOfWar.Test
+namespace Zelos.Mapping.Test
 {
     [TestClass]
     public class CryptoUnitTests
     {
         public static FogMap Map1 { get; private set; }
         public static FogMap Map2 { get; private set; }
-        public static Node N0 { get; private set; }
-        public static Node N1 { get; private set; }
-        public static Node N2 { get; private set; }
-        public static Node N3 { get; private set; }
-        public static Node N4 { get; private set; }
-        public static Node N5 { get; private set; }
-        public static Node N6 { get; private set; }
-        public static Node N7 { get; private set; }
-        public static Node N8 { get; private set; }
-        public static Node N9 { get; private set; }
+        public static Node N0;
+        public static Node N1 ;
+        public static Node N2 ;
+        public static Node N3 ;
+        public static Node N4 ;
+        public static Node N5 ;
+        public static Node N6 ;
+        public static Node N7 ;
+        public static Node N8 ;
+        public static Node N9 ;
 
         [ClassInitialize]
         public static void ClassInitilize(TestContext context)
         {
-            var map = new Prototype.Map();
-            N0 = map.CreateNode();
-            N1 = map.CreateNode();
-            N2 = map.CreateNode();
-            N3 = map.CreateNode();
-            N4 = map.CreateNode();
-            N5 = map.CreateNode();
-            N6 = map.CreateNode();
-            N7 = map.CreateNode();
-            N8 = map.CreateNode();
-            N9 = map.CreateNode();
+            var map = Map.Create()
+                .AddNode(out N0)
+                .AddNode(out N1)
+                .AddNode(out N2)
+                .AddNode(out N3)
+                .AddNode(out N4)
+                .AddNode(out N5)
+                .AddNode(out N6)
+                .AddNode(out N7)
+                .AddNode(out N8)
+                .AddNode(out N9)
+                .GetResult();
+
 
             // We dont need to Connect Nodes, this has no influence on the crypto part
             var p = Generate.Prime();
-            Map1 = new FogMap(map, 10, p);
-            Map2 = new FogMap(map, 10, p);
+            Map1 = FogMap.Create(map, 10, p);
+            Map2 = FogMap.Create(map, 10, p);
 
 
             var s1 = new Scribe.ScruptureCollection();
@@ -65,8 +68,8 @@ namespace Zelos.FogOfWar.Test
                 Map2.Initilize.Phase2Async(phase2_1));
 
 
-            s2.AddAsync(s1.FinishAsync().Result);
-            s1.AddAsync(s2.FinishAsync().Result);
+            s2.AddAsync(s1.FinishAsync().Result).Wait();
+            s1.AddAsync(s2.FinishAsync().Result).Wait();
 
             Assert.IsTrue(s1.IsFinised);
             Assert.IsTrue(s2.IsFinised);
@@ -110,8 +113,8 @@ namespace Zelos.FogOfWar.Test
             var s3_2 = t2.Result.ToArray();
 
 
-            s2.AddAsync(s1.FinishAsync().Result);
-            s1.AddAsync(s2.FinishAsync().Result);
+            s2.AddAsync(s1.FinishAsync().Result).Wait();
+            s1.AddAsync(s2.FinishAsync().Result).Wait();
 
             Assert.IsTrue(s1.IsFinised);
             Assert.IsTrue(s2.IsFinised);
@@ -140,10 +143,10 @@ namespace Zelos.FogOfWar.Test
         {
             var selection = new[] { pos1, pos2, s1_, s2_ };
             var data = new[] { N0, N1, N2, N3, N4, N5, N6, N7, N8, N9 };
-            var position1 = new List<Prototype.Node>();
-            var position2 = new List<Prototype.Node>();
-            var search1 = new List<Prototype.Node>();
-            var search2 = new List<Prototype.Node>();
+            var position1 = new List<Node>();
+            var position2 = new List<Node>();
+            var search1 = new List<Node>();
+            var search2 = new List<Node>();
 
             var lists = new[] { position1, position2, search1, search2 };
 
@@ -176,8 +179,8 @@ namespace Zelos.FogOfWar.Test
             var s3_1 = t1.Result.ToArray();
             var s3_2 = t2.Result.ToArray();
 
-            s2.AddAsync(s1.FinishAsync().Result);
-            s1.AddAsync(s2.FinishAsync().Result);
+            s2.AddAsync(s1.FinishAsync().Result).Wait();
+            s1.AddAsync(s2.FinishAsync().Result).Wait();
 
             Assert.IsTrue(s1.IsFinised);
             Assert.IsTrue(s2.IsFinised);
@@ -206,7 +209,7 @@ namespace Zelos.FogOfWar.Test
         private static T TestSerelisation<T>(T result, Scribe.ScruptureCollection c1, Scribe.ScruptureCollection c2) where T : Scribe.AbstractScripture, new()
         {
             var data = c1.AddAsync(result).Result;
-            return (T)c2.AddAsync(data);
+            return (T)c2.AddAsync(data).Result;
 
         }
     }

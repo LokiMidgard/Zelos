@@ -147,10 +147,10 @@ namespace Zelos.Scribe
         protected virtual void OnFreeze() { }
 
 
-        protected virtual bool AreEqual(AbstractScripture o1, AbstractScripture o2, bool ignoreUnknowSecrests)
+        protected virtual bool AreEqual(AbstractScripture o1, AbstractScripture o2, ComparisionKind kind)
         {
-            var v1 = o1.GetValues(ignoreUnknowSecrests).ToArray();
-            var v2 = o2.GetValues(ignoreUnknowSecrests).ToArray();
+            var v1 = o1.GetValues(kind== ComparisionKind.UsePropertysExcludingSecret).ToArray();
+            var v2 = o2.GetValues(kind == ComparisionKind.UsePropertysExcludingSecret).ToArray();
             if (v1.Length != v2.Length)
                 return false;
 
@@ -171,7 +171,7 @@ namespace Zelos.Scribe
             return true;
         }
 
-        public static bool Equals(AbstractScripture o1, AbstractScripture o2, bool ignoreUnknowSecrests, bool useHashIfFrozen = true)
+        public static bool Equals(AbstractScripture o1, AbstractScripture o2, ComparisionKind kind)
         {
             if (object.ReferenceEquals(o1, o2))
                 return true;
@@ -182,20 +182,20 @@ namespace Zelos.Scribe
             if (o1.GetType() != o2.GetType())
                 return false;
 
-            if (useHashIfFrozen && o1.IsFrozen && o2.IsFrozen)
+            if (kind== ComparisionKind.UseHashIfFrozen && o1.IsFrozen && o2.IsFrozen)
                 return o1.Hash.SequenceEqual(o2.Hash);
 
-            if (!ignoreUnknowSecrests && (o1.HasSecrets != o2.HasSecrets))
+            if (kind == ComparisionKind.UsePropertysIncludingSecret && (o1.HasSecrets != o2.HasSecrets))
                 return false;
 
-            if (!o1.AreEqual(o1, o2, ignoreUnknowSecrests))
+            if (!o1.AreEqual(o1, o2, kind))
                 return false;
 
             if (o1.SubScripture.Count != o2.SubScripture.Count)
                 return false;
 
             for (int i = 0; i < o1.SubScripture.Count; i++)
-                if (!Equals(o1.SubScripture[i], o2.SubScripture[i], ignoreUnknowSecrests))
+                if (!Equals(o1.SubScripture[i], o2.SubScripture[i], kind))
                     return false;
 
             return true;
@@ -206,7 +206,7 @@ namespace Zelos.Scribe
         {
             var other = obj as AbstractScripture;
 
-            return Equals(this, other, false);
+            return Equals(this, other,  ComparisionKind.UseHashIfFrozen);
         }
 
         // override object.GetHashCode

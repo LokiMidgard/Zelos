@@ -23,7 +23,7 @@ namespace Zelos.Scribe.Test
         {
             var transfare = c.AddAsync(s).Result;
             var s2 = c.AddAsync(transfare);
-            return (T)s2;
+            return (T)s2.Result;
         }
 
         [TestMethod]
@@ -39,8 +39,8 @@ namespace Zelos.Scribe.Test
             Assert.AreEqual(default(int), s2.ShouldNotBeSerelized);
             Assert.IsTrue(s2.IsFrozen);
 
-            Assert.IsTrue(AbstractScripture.Equals(s, s2, true));
-            Assert.IsFalse(AbstractScripture.Equals(s, s2, false));
+            Assert.IsTrue(AbstractScripture.Equals(s, s2, ComparisionKind.UsePropertysExcludingSecret));
+            Assert.IsFalse(AbstractScripture.Equals(s, s2, ComparisionKind.UsePropertysIncludingSecret));
         }
         //[TestMethod]
         //public void SerelizePropertysSecret()

@@ -12,10 +12,11 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-20161123-03" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.1.5-preview" />
     <PackageReference Include="MSTest.TestFramework" Version="1.0.6-preview" />
+    <PackageReference Include="System.Runtime.Serialization.Xml" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Zelos.Common.Crypto\Zelos.Common.Crypto.csproj" />
-    <ProjectReference Include="..\Zelos.FogOfWar\Zelos.FogOfWar.csproj" />
+    <ProjectReference Include="..\Zelos.FogOfWar\Zelos.Mapping.csproj" />
     <ProjectReference Include="..\Zelos.Scribe\Zelos.Scribe.csproj" />
   </ItemGroup>
   <ItemGroup>

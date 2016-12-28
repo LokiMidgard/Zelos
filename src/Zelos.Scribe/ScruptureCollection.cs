@@ -74,7 +74,7 @@ namespace Zelos.Scribe
                 var originalScripture = this.OtherScriptures[i];
                 var withSecrete = finishElement.Scriptures[i];
 
-                if (!AbstractScripture.Equals(originalScripture, withSecrete, true, false))
+                if (!AbstractScripture.Equals(originalScripture, withSecrete, ComparisionKind.UsePropertysExcludingSecret))
                     return false;
 
                 if (!withSecrete.CheckHash(finishElement.Secrete))
