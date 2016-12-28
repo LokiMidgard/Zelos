@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26014.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zelos.Mapping", "src\Zelos.FogOfWar\Zelos.Mapping.csproj", "{A0365417-2C88-4D13-9A0E-81CD4F4F72FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zelos.Mapping", "src\Zelos.Mapping\Zelos.Mapping.csproj", "{A0365417-2C88-4D13-9A0E-81CD4F4F72FA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zelos.FogOfWar.Test", "src\Zelos.FogOfWar.Test\Zelos.FogOfWar.Test.csproj", "{8284F902-2FB2-4762-8D56-9EC727E11B90}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zelos.Mapping.Test", "src\Zelos.Mapping.Test\Zelos.Mapping.Test.csproj", "{8284F902-2FB2-4762-8D56-9EC727E11B90}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zelos.Scribe", "src\Zelos.Scribe\Zelos.Scribe.csproj", "{6DA8BF89-C713-4B4A-AFB7-3E1F9ADC5F94}"
 EndProject

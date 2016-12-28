@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp1.0</TargetFramework>
@@ -16,7 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Zelos.Common.Crypto\Zelos.Common.Crypto.csproj" />
-    <ProjectReference Include="..\Zelos.FogOfWar\Zelos.Mapping.csproj" />
+    <ProjectReference Include="..\Zelos.Mapping\Zelos.Mapping.csproj" />
     <ProjectReference Include="..\Zelos.Scribe\Zelos.Scribe.csproj" />
   </ItemGroup>
   <ItemGroup>
