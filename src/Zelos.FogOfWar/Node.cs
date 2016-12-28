@@ -12,7 +12,7 @@ namespace Zelos.FogOfWar
     {
         private BigInteger originalZ;
 
-        public Map Map { get; }
+        public FogMap Map { get; }
 
         public BigInteger Z { get; private set; }
 
@@ -23,7 +23,7 @@ namespace Zelos.FogOfWar
         public Scanner Scan { get; }
         public bool IsInitilized => this.Initilize.Phase == Initilizer.PhaseState.Finished;
 
-        public Node(Map map)
+        public Node(FogMap map)
         {
             this.Map = map;
             this.Initilize = new Initilizer(this);

@@ -11,8 +11,8 @@ namespace Zelos.FogOfWar.Test
     [TestClass]
     public class CryptoUnitTests
     {
-        public static Map Map1 { get; private set; }
-        public static Map Map2 { get; private set; }
+        public static FogMap Map1 { get; private set; }
+        public static FogMap Map2 { get; private set; }
         public static Node N0 { get; private set; }
         public static Node N1 { get; private set; }
         public static Node N2 { get; private set; }
@@ -41,8 +41,8 @@ namespace Zelos.FogOfWar.Test
 
             // We dont need to Connect Nodes, this has no influence on the crypto part
             var p = Generate.Prime();
-            Map1 = new Map(map, 10, p);
-            Map2 = new Map(map, 10, p);
+            Map1 = new FogMap(map, 10, p);
+            Map2 = new FogMap(map, 10, p);
 
 
             var s1 = new Scribe.ScruptureCollection();

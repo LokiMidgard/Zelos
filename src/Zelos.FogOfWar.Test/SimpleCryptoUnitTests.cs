@@ -19,8 +19,8 @@ namespace FogOfWar.Test
 
 
             var p = Generate.Prime();
-            var cMap1 = new Map(map, 1, p);
-            var cMap2 = new Map(map, 1, p);
+            var cMap1 = new FogMap(map, 1, p);
+            var cMap2 = new FogMap(map, 1, p);
 
             var t1_1 = cMap1.Initilize.Phase0Async();
             var t1_2 = cMap2.Initilize.Phase0Async();

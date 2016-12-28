@@ -10,7 +10,7 @@ using Zelos.Scribe;
 
 namespace Zelos.FogOfWar
 {
-    public class Map
+    public class FogMap
     {
         private readonly CryptoNode[] generatedCryptoNodes;
         private readonly Dictionary<Prototype.Node, CryptoNode> prototypeLookup;
@@ -27,7 +27,7 @@ namespace Zelos.FogOfWar
 
         public Prototype.Map PrototypeMap { get; }
 
-        public Map(Prototype.Map prototyp, int maxShips, BigInteger prime)
+        public FogMap(Prototype.Map prototyp, int maxShips, BigInteger prime)
         {
             this.generatedCryptoNodes = prototyp.Nodes.Select(x => new CryptoNode { PrototypeNode = x, TrueNode = new Node(this) }).ToArray();
             this.prototypeLookup = this.generatedCryptoNodes.ToDictionary(x => x.PrototypeNode);
@@ -44,8 +44,8 @@ namespace Zelos.FogOfWar
         public class Initilizer
         {
             internal PhaseState Phase { get; private set; }
-            private readonly Map parent;
-            public Initilizer(Map parent)
+            private readonly FogMap parent;
+            public Initilizer(FogMap parent)
             {
                 this.parent = parent;
             }
@@ -260,11 +260,11 @@ namespace Zelos.FogOfWar
 
         public class Scanner
         {
-            private readonly Map parent;
+            private readonly FogMap parent;
             private Prototype.Node[] position;
             private Prototype.Node[] toProbe;
 
-            internal Scanner(Map parent)
+            internal Scanner(FogMap parent)
             {
                 this.parent = parent;
             }

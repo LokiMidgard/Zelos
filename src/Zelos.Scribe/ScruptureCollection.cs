@@ -42,7 +42,7 @@ namespace Zelos.Scribe
             this.ownScriptures.Add(newScripture);
             return new ScriptureTransmitt(newScripture.Serelize(newScripture is FinishScripture));
         }
-        public AbstractScripture AddAsync(ScriptureTransmitt transmitt)
+        public async Task<AbstractScripture> AddAsync(ScriptureTransmitt transmitt)
         {
             if (this.IsLastOtherAdded)
                 throw new InvalidOperationException("Other queue already closed.");
@@ -56,7 +56,7 @@ namespace Zelos.Scribe
             this.otherScriptures.Add(newScripture);
 
             if (newScripture is FinishScripture)
-                this.IsOtherValid = CheckOtherQueue();
+                await Task.Run(() => this.IsOtherValid = CheckOtherQueue());
             return newScripture;
         }
 
