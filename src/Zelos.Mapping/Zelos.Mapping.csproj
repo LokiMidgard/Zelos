@@ -4,7 +4,7 @@
     <AssemblyName>Zelos.Mapping</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>netstandard1.5</TargetFramework>
+    <TargetFramework>netstandard1.3</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="**\*.cs" />
