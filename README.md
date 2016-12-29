@@ -17,21 +17,21 @@ On the next day I got an mail with the solution. And I started this project.
 
 Consider following scenario. A two player turnbased stratigic game played on a 3 x 3 map. Both players have one marker (blue and green).
 
-![map1](img/map1.svg)
+![map1](img/map1.png)
 
 A player knows only the position of his own marker. The other marker is invisible unless it comes in range of vision, which is 1 field (measured in manhatten distance).
 So both players, who started in a corner, see olny 3 tiles. The tile they currently occupy and for the blue player the fields below and right and for the green player
 the fields above and left from his position. Those fields have been marked in the color of the player.
 
-![map2](img/map2.svg)
+![map2](img/map2.png)
 
 Now both players plan there move. They may move only one field horizontal, vertical or diagonal. The green player moves to the center, while the blue Player moves down.
 
-![map3](img/map3.svg)
+![map3](img/map3.png)
 
 After Both playyers executed there move, they are next to each other. That means they also should know the position of each other.
 
-![map4](img/map4.svg)
+![map4](img/map4.png)
 
 The normal approach for a game played online is offten one of the following
  + Using a server
