@@ -277,16 +277,21 @@ namespace Zelos.Mapping.FogOfWar
                 (var blendFactor, var inverseBlendfactor) = Generate.InversableExponent(this.parent.Prime);
                 this.position = ownPositions.ToArray();
                 this.toProbe = positionsToProbe.ToArray();
-                var result = new PScan() { Scanns = new PreparedScan[this.toProbe.Length], BlendFactor = blendFactor };
+                var result = new PScan() { Scanns = new PreparedScan[parent.MaxShips], BlendFactor = blendFactor };
                 if (this.position.Length > this.parent.MaxShips)
                     throw new ArgumentOutOfRangeException("To many Positions");
                 return Task.Run(() =>
                 {
                     Parallel.For(0, result.Scanns.Length, i =>
                     {
-                        var node = this.toProbe[i];
-                        var cryptoNode = this.parent.prototypeLookup[node];
-                        result.Scanns[i] = new PreparedScan() { Value = cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor) };
+                        if (i < this.toProbe.Length)
+                        {
+                            var node = this.toProbe[i];
+                            var cryptoNode = this.parent.prototypeLookup[node];
+                            result.Scanns[i] = new PreparedScan() { Value = cryptoNode.TrueNode.Scan.Prepare(blendFactor, inverseBlendfactor) };
+                        }
+                        else
+                            result.Scanns[i] = new PreparedScan() { Value = Zelos.Common.Crypto.Generate.Random(parent.Prime) };
 
                     });
                     return result;
@@ -328,6 +333,8 @@ namespace Zelos.Mapping.FogOfWar
 
                 var searching = await Task.WhenAll(positions.Positions.GroupBy(x => x.Index, x => x.Value).Select(async p =>
                 {
+                    if (p.Key >= this.toProbe.Length)
+                        return null;
                     var node = this.toProbe[p.Key];
                     var crypto = this.parent.prototypeLookup[node];
                     var found = await crypto.TrueNode.Scan.ScanAsync(p);
