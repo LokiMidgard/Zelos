@@ -61,7 +61,7 @@ The seccond part is to reveal information to the opponent in the middle of the g
 
 Briefly worded, every field is a number calculated using a random number (knwon by every one) and a secret exponent both players appliy resulting in the number of the field.
 Now a player can ask his opponent if he has his marker on a field, without revealing what field he asks for. To do this he applies a seccond secrete exponent and sends this to his opponent.
-Because the oponent does not know the exponent he does not know the exponent, he does not know wich filed the player asked for. Now the opponent uses the secreet exponent of the field where his
+Because the oponent does not know the exponent, he does not know wich filed the player asked for. Now the opponent uses the secreet exponent of the field where his
 marker is positionied and removes this exponent. This results in a new number that does not hold any information for the player, unless he also removes both private exponets he previously applied.
 If and only if this results in the originaly generated random number, this is the field with the oppnents marker.
 
@@ -76,4 +76,4 @@ Network delay not included.
 
 ## Getting Started
 
-Comming soon... *written 29.12.2016*
+Comming soon... *(written 29.12.2016)*
