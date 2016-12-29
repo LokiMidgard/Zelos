@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generiert durch Microsoft Visio, SVG Export Zeichnung3.svg Zeichenblatt-1 -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="6.68416in" height="6.31908in"
+		viewBox="0 0 481.259 454.974" xml:space="preserve" color-interpolation-filters="sRGB" class="st11">
+	<v:documentProperties v:langID="1031" v:metric="true" v:viewMarkup="false"/>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:#ffffff;stroke:#a5a5a5;stroke-dasharray:14,10;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st2 {fill:#ffffff;stroke:#70ad47;stroke-dasharray:14,10;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st3 {fill:#ffffff;stroke:#5b9bd5;stroke-dasharray:14,10;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st4 {fill:#ffffff;stroke:#4f4640;stroke-dasharray:14,10;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st5 {fill:#ffffff;stroke:#5b9bd5;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st6 {fill:#ffffff;stroke:#70ad47;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st7 {marker-end:url(#mrkr4-46);stroke:#7ec24f;stroke-linecap:round;stroke-linejoin:round;stroke-width:1}
+		.st8 {fill:#7ec24f;fill-opacity:1;stroke:#7ec24f;stroke-opacity:1;stroke-width:0.28409090909091}
+		.st9 {marker-end:url(#mrkr4-52);stroke:#72aee4;stroke-linecap:round;stroke-linejoin:round;stroke-width:1}
+		.st10 {fill:#72aee4;fill-opacity:1;stroke:#72aee4;stroke-opacity:1;stroke-width:0.28409090909091}
+		.st11 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<defs id="Markers">
+		<g id="lend4">
+			<path d="M 2 1 L 0 0 L 2 -1 L 2 1 " style="stroke:none"/>
+		</g>
+		<marker id="mrkr4-46" class="st8" v:arrowType="4" v:arrowSize="2" v:setback="7.04" refX="-7.04" orient="auto"
+				markerUnits="strokeWidth" overflow="visible">
+			<use xlink:href="#lend4" transform="scale(-3.52,-3.52) "/>
+		</marker>
+		<marker id="mrkr4-52" class="st10" v:arrowType="4" v:arrowSize="2" v:setback="7.04" refX="-7.04" orient="auto"
+				markerUnits="strokeWidth" overflow="visible">
+			<use xlink:href="#lend4" transform="scale(-3.52,-3.52) "/>
+		</marker>
+	</defs>
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>Zeichenblatt-1</title>
+		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50394"
+				v:shadowOffsetY="-8.50394"/>
+		<v:layer v:name="Verbinder" v:index="0"/>
+		<g id="shape42-1" v:mID="42" v:groupContext="shape" transform="translate(2.17354,-1.6253)">
+			<title>Achteck.42</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st1"/>
+		</g>
+		<g id="shape43-3" v:mID="43" v:groupContext="shape" transform="translate(178.47,-1.6253)">
+			<title>Achteck.43</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st2"/>
+		</g>
+		<g id="shape44-5" v:mID="44" v:groupContext="shape" transform="translate(354.218,-1.6253)">
+			<title>Achteck.44</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st2"/>
+		</g>
+		<g id="shape45-7" v:mID="45" v:groupContext="shape" transform="translate(354.218,-164.846)">
+			<title>Achteck.45</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st2"/>
+		</g>
+		<g id="shape46-9" v:mID="46" v:groupContext="shape" transform="translate(178.196,-164.846)">
+			<title>Achteck.46</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st1"/>
+		</g>
+		<g id="shape47-11" v:mID="47" v:groupContext="shape" transform="translate(2.17354,-164.846)">
+			<title>Achteck.47</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st3"/>
+		</g>
+		<g id="shape48-13" v:mID="48" v:groupContext="shape" transform="translate(354.218,-328.067)">
+			<title>Achteck.48</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st1"/>
+		</g>
+		<g id="shape49-15" v:mID="49" v:groupContext="shape" transform="translate(178.196,-328.067)">
+			<title>Achteck.49</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st3"/>
+		</g>
+		<g id="shape50-17" v:mID="50" v:groupContext="shape" transform="translate(2.17354,-328.067)">
+			<title>Achteck.50</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M88.19 330.25 L36.53 330.25 L0 366.78 L0 418.44 L36.53 454.97 L88.19 454.97 L124.72 418.44 L124.72 366.78 L88.19
+						 330.25 Z" class="st3"/>
+		</g>
+		<g id="shape51-19" v:mID="51" v:groupContext="shape" transform="translate(7.84283,-333.736)">
+			<title>Achteck.51</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape52-21" v:mID="52" v:groupContext="shape" transform="translate(183.865,-333.736)">
+			<title>Achteck.52</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape53-23" v:mID="53" v:groupContext="shape" transform="translate(7.84283,-170.515)">
+			<title>Achteck.53</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape54-25" v:mID="54" v:groupContext="shape" transform="translate(183.865,-170.515)">
+			<title>Achteck.54</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape55-27" v:mID="55" v:groupContext="shape" transform="translate(359.888,-333.736)">
+			<title>Achteck.55</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape56-29" v:mID="56" v:groupContext="shape" transform="translate(359.888,-170.515)">
+			<title>Achteck.56</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape57-31" v:mID="57" v:groupContext="shape" transform="translate(7.84283,-7.29459)">
+			<title>Achteck.57</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape58-33" v:mID="58" v:groupContext="shape" transform="translate(183.865,-7.29459)">
+			<title>Achteck.58</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape59-35" v:mID="59" v:groupContext="shape" transform="translate(359.888,-7.29459)">
+			<title>Achteck.59</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M80.18 341.59 L33.21 341.59 L0 374.8 L0 421.76 L33.21 454.97 L80.18 454.97 L113.39 421.76 L113.39 374.8 L80.18
+						 341.59 Z" class="st4"/>
+		</g>
+		<g id="shape60-37" v:mID="60" v:groupContext="shape" transform="translate(92.8822,491.172) rotate(180)">
+			<title>Dreieck.60</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M56.69 454.97 L28.35 398.28 L0 454.97 L56.69 454.97 Z" class="st5"/>
+		</g>
+		<g id="shape61-39" v:mID="61" v:groupContext="shape" transform="translate(388.234,-35.6411)">
+			<title>Dreieck.61</title>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<path d="M56.69 454.97 L28.35 398.28 L0 454.97 L56.69 454.97 Z" class="st6"/>
+		</g>
+		<g id="shape62-41" v:mID="62" v:groupContext="shape" v:layerMember="0" transform="translate(416.58,-54.5387)">
+			<title>Dynamischer Verbinder</title>
+			<path d="M0 454.97 L-171 287.23" class="st7"/>
+		</g>
+		<g id="shape63-47" v:mID="63" v:groupContext="shape" v:layerMember="0" transform="translate(57.4491,-399.878)">
+			<title>Dynamischer Verbinder.63</title>
+			<path d="M7.09 454.97 L7.09 620.6" class="st9"/>
+		</g>
+	</g>
+</svg>
