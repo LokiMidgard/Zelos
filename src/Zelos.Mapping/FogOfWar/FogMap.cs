@@ -20,7 +20,6 @@ namespace Zelos.Mapping.FogOfWar
         public int MaxShips { get; }
         public Scanner Scan { get; }
 
-        private CryptoNode<TNode, TEdged> ShadowNode { get; }
         public Initilizer Initilize { get; }
         public bool IsInitilzied => this.Initilize.Phase == Initilizer.PhaseState.Finished;
 
@@ -35,7 +34,6 @@ namespace Zelos.Mapping.FogOfWar
             this.MaxShips = maxShips;
             this.Scan = new Scanner(this);
             this.Initilize = new Initilizer(this);
-            this.ShadowNode = new CryptoNode<TNode, TEdged>(this);
             this.Prime = prime;
         }
 
@@ -68,7 +66,6 @@ namespace Zelos.Mapping.FogOfWar
                         var item = this.parent.generatedCryptoNodes[i];
                         result.Nodes[i] = new NodeToPhase1() { Value = item.TrueNode.Initilize.Phase0(), PrototypeIdNode = item.PrototypeNode.id };
                     }
-                    result.ShadowNode = new NodeToPhase1() { Value = this.parent.ShadowNode.Initilize.Phase0(), PrototypeIdNode = -1 };
                     return result;
                 });
             }
@@ -95,7 +92,6 @@ namespace Zelos.Mapping.FogOfWar
                         var ownExponented = cn.TrueNode.Initilize.Phase1(item.Value);
                         result.Nodes[i] = new NodeToPhase2() { OtherExponented = ownExponented, PrototypeIdNode = cn.PrototypeNode.id };
                     }
-                    result.ShadowNode = new NodeToPhase2() { OtherExponented = this.parent.ShadowNode.Initilize.Phase1(fromPhaseOne.ShadowNode.Value), PrototypeIdNode = -1 };
                     return result;
                 });
             }
@@ -113,7 +109,6 @@ namespace Zelos.Mapping.FogOfWar
                        var cn = this.parent.prototypeIdLookup[item.PrototypeIdNode];
                        cn.TrueNode.Initilize.Phase2(item.OtherExponented);
                    }
-                   this.parent.ShadowNode.Initilize.Phase2(fromPhaseTwo.ShadowNode.OtherExponented);
                    this.parent.CryptoLookup = this.parent.generatedCryptoNodes.ToDictionary(x => x.TrueNode.Z);
 
                    this.Phase = PhaseState.Finished;
@@ -125,8 +120,6 @@ namespace Zelos.Mapping.FogOfWar
             {
                 [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal NodeToPhase1[] Nodes { get; set; }
-                [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
-                internal NodeToPhase1 ShadowNode { get; set; }
 
                 [Scribe.ScriptureValue(Scribe.ScriptureValueType.Public)]
                 internal Map<TNode, TEdged> Map { get; set; }
@@ -296,8 +289,6 @@ namespace Zelos.Mapping.FogOfWar
                     });
                     return result;
                 });
-
-
             }
 
             public Task<PPosition> PreparePositionsAsync(PScan scanns)
@@ -310,14 +301,17 @@ namespace Zelos.Mapping.FogOfWar
                    {
                        var i = index / scanns.Scanns.Length;
                        var j = index % scanns.Scanns.Length;
-                       CryptoNode<TNode, TEdged> cryptoNode;
+                       BigInteger value;
                        if (i < this.position.Length)
-                           cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
+                       {
+                           var cryptoNode = this.parent.prototypeLookup[this.position[i]].TrueNode;
+                           value = cryptoNode.Scan.Position(scanns.Scanns[j].Value);
+                       }
                        else
-                           cryptoNode = this.parent.ShadowNode;
+                           value = Generate.Random(this.parent.Prime);
 
                        //for (int j = 0; j < scanns.Scanns.Length; j++)
-                       result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition() { Value = cryptoNode.Scan.Position(scanns.Scanns[j].Value), Index = j };
+                       result.Positions[i * scanns.Scanns.Length + j] = new PreparedPosition() { Value = value, Index = j };
                    });
                    return result;
                });
